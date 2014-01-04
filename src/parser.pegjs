@@ -66,13 +66,14 @@ Grammar
   = __ initializer:(Initializer __)? rules:(Rule __)+ {
       return {
         type:        "grammar",
+        region:      region(),
         initializer: extractOptional(initializer, 0),
         rules:       extractList(rules, 0)
       };
     }
 
 Initializer
-  = code:CodeBlock EOS { return { type: "initializer", code: code }; }
+  = code:CodeBlock EOS { return { type: "initializer", region: region(), code: code }; }
 
 Rule
   = name:IdentifierName __
@@ -82,10 +83,12 @@ Rule
     {
       return {
         type:        "rule",
+        region:      region(),
         name:        name,
         expression:  displayName !== null
           ? {
               type:       "named",
+              region:     region(),
               name:       displayName[0],
               expression: expression
             }
@@ -99,33 +102,33 @@ Expression
 ChoiceExpression
   = first:ActionExpression rest:(__ "/" __ ActionExpression)* {
       return rest.length > 0
-        ? { type: "choice", alternatives: buildList(first, rest, 3) }
+        ? { type: "choice", region: region(), alternatives: buildList(first, rest, 3) }
         : first;
     }
 
 ActionExpression
   = expression:SequenceExpression code:(__ CodeBlock)? {
       return code !== null
-        ? { type: "action", expression: expression, code: code[1] }
+        ? { type: "action", region: region(), expression: expression, code: code[1] }
         : expression;
     }
 
 SequenceExpression
   = first:LabeledExpression rest:(__ LabeledExpression)* {
       return rest.length > 0
-        ? { type: "sequence", elements: buildList(first, rest, 1) }
+        ? { type: "sequence", region: region(), elements: buildList(first, rest, 1) }
         : first;
     }
 
 LabeledExpression
   = label:Identifier __ ":" __ expression:PrefixedExpression {
-      return { type: "labeled", label: label, expression: expression };
+      return { type: "labeled", region: region(), label: label, expression: expression };
     }
   / PrefixedExpression
 
 PrefixedExpression
   = operator:PrefixedOperator __ expression:SuffixedExpression {
-      return { type: OPS_TO_PREFIXED_TYPES[operator], expression: expression };
+      return { type: OPS_TO_PREFIXED_TYPES[operator], region: region(), expression: expression };
     }
   / SuffixedExpression
 
@@ -136,7 +139,7 @@ PrefixedOperator
 
 SuffixedExpression
   = expression:PrimaryExpression __ operator:SuffixedOperator {
-      return { type: OPS_TO_SUFFIXED_TYPES[operator], expression: expression };
+      return { type: OPS_TO_SUFFIXED_TYPES[operator], region: region(), expression: expression };
     }
   / PrimaryExpression
 
@@ -155,12 +158,12 @@ PrimaryExpression
 
 RuleReferenceExpression
   = name:IdentifierName !(__ (StringLiteral __)? "=") {
-      return { type: "rule_ref", name: name }
+      return { type: "rule_ref", region: region(), name: name }
     }
 
 SemanticPredicateExpression
   = operator:SemanticPredicateOperator __ code:CodeBlock {
-      return { type: OPS_TO_SEMANTIC_PREDICATE_TYPES[operator], code: code };
+      return { type: OPS_TO_SEMANTIC_PREDICATE_TYPES[operator], region: region(), code: code };
     }
 
 SemanticPredicateOperator
@@ -323,6 +326,7 @@ CharacterClassMatcher "character class"
     {
       return {
         type:       "class",
+        region:     region(),
         parts:      parts,
         inverted:   inverted !== null,
         ignoreCase: ignoreCase !== null,
