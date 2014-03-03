@@ -18,6 +18,13 @@ Features
   * Usable [from your browser](http://pegjs.majda.cz/online), from the command
     line, or via JavaScript API
 
+Clone Info
+----------
+
+This [clone](https://github.com/GerHobbelt/pegjs) contains the work done by 
+[Mingun](https://github.com/Mingun/pegjs) and a patch by 
+[Eric M. Cornelius](https://github.com/EricMCornelius/pegjs).
+
 Getting Started
 ---------------
 
