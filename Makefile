@@ -56,7 +56,7 @@ parser:
 	$(PEGJS) $(PARSER_SRC_FILE) $(PARSER_OUT_FILE)
 
 # Build the browser version of the library
-browser:
+browser: parser
 	mkdir -p $(BROWSER_DIR)
 
 	rm -f $(BROWSER_FILE_DEV)
@@ -118,15 +118,15 @@ browserclean:
 	rm -rf $(BROWSER_DIR)
 
 # Run the spec suite
-spec:
+spec: parser
 	$(JASMINE_NODE) --verbose $(SPEC_DIR)
 
 # Run the benchmark suite
-benchmark:
+benchmark: parser
 	$(BENCHMARK_RUN)
 
 # Run JSHint on the source
-hint:
+hint: parser
 	$(JSHINT)                                                                \
 	  `find $(LIB_DIR) -name '*.js'`                                         \
 	  `find $(SPEC_DIR) -name '*.js' -and -not -path '$(SPEC_DIR)/vendor/*'` \
