@@ -2,6 +2,7 @@
   var utils = require("./utils");
 }
 
+@nocache
 grammar
   = __ initializer:initializer? rules:rule+ {
       return {
@@ -12,6 +13,7 @@ grammar
       };
     }
 
+@nocache
 initializer
   = code:action semicolon? {
       return {
@@ -21,8 +23,9 @@ initializer
       };
     }
 
+@nocache
 rule
-  = annotations:annotation* name:identifier displayName:string? equals expression:expression semicolon? {
+  = annotations:annotations name:identifier displayName:string? equals expression:expression semicolon? {
       return {
         type:        "rule",
         region:      region(),
@@ -39,19 +42,26 @@ rule
       };
     }
 
+@nocache
+annotations
+  = annotation*
+
+@nocache
 annotation
   = at name:identifier params:params? {
-    return {
-      name: name,
-      params: params===null?[]:params
+      return {
+        name: name,
+        params: params===null?[]:params
+      };
     };
-  };
 
+@nocache
 params
   = lparen head:(i:param comma {return i;})* tail:param? rparen {
-    if (tail) head.push(tail); return head;
-  };
+      if (tail) head.push(tail); return head;
+    };
   
+@nocache
 param = identifier;
 
 expression
@@ -173,7 +183,7 @@ suffixed
     }
   / expression:primary r:range {
       if (!(r.delimiter !== undefined)) {
-        if (!(r.max !== undefined)) {// unbounded
+        if (!(r.max !== undefined)) { // unbounded
           if (r.min === 0) {
             return {
               type:       "zero_or_more",
@@ -224,13 +234,23 @@ primary
 
 range
   = range_open r:range2 delimiter:(comma primary)? range_close {
-    r.delimiter = delimiter !== null ? delimiter[1] : undefined;
-    return r;
-  }
+      r.delimiter = delimiter !== null ? delimiter[1] : undefined;
+      return r;
+    }
 
 range2
-  = min:int? dots max:int? {return {min:min!==null?min:0, max:max!==null?max:undefined};}
-  / val:int {return {min:val, max:val};}
+  = min:int? dots max:int? {
+      return {
+        min: min !== null ? min : 0, 
+        max: max !== null ? max : undefined
+      };
+    }
+  / val:int {
+      return {
+        min: val, 
+        max: val
+      };
+    }
 
 /* "Lexical" elements */
 
@@ -240,29 +260,49 @@ action "action"
 braced
   = $("{" (braced / nonBraceCharacters)* "}")
 
+@nocache
 nonBraceCharacters
   = nonBraceCharacter+
 
+@nocache
 nonBraceCharacter
   = [^{}]
 
+@nocache
 equals    = "=" __ { return "="; }
+@nocache
 colon     = ":" __ { return ":"; }
+@nocache
 semicolon = ";" __ { return ";"; }
+@nocache
 slash     = "/" __ { return "/"; }
+@nocache
 and       = "&" __ { return "&"; }
+@nocache
 not       = "!" __ { return "!"; }
+@nocache
 dollar    = "$" __ { return "$"; }
+@nocache
 question  = "?" __ { return "?"; }
+@nocache
 star      = "*" __ { return "*"; }
+@nocache
 plus      = "+" __ { return "+"; }
+@nocache
 lparen    = "(" __ { return "("; }
+@nocache
 rparen    = ")" __ { return ")"; }
+@nocache
 dot       = "." __ { return "."; }
+@nocache
 comma     = "," __ { return ","; }
+@nocache
 dots      = ".." __{ return ".."; }
+@nocache
 range_open= "|" __ { return "|"; }
+@nocache
 range_close="|" __ { return "|"; }
+@nocache
 at        = "@" __ { return "@"; }
 
 int "integer" 
@@ -306,9 +346,11 @@ literal "literal"
 string "string"
   = string:(doubleQuotedString / singleQuotedString) __ { return string; }
 
+@nocache
 doubleQuotedString
   = '"' chars:doubleQuotedCharacter* '"' { return chars.join(""); }
 
+@nocache
 doubleQuotedCharacter
   = simpleDoubleQuotedCharacter
   / simpleEscapeSequence
@@ -317,12 +359,15 @@ doubleQuotedCharacter
   / unicodeEscapeSequence
   / eolEscapeSequence
 
+@nocache
 simpleDoubleQuotedCharacter
   = !('"' / "\\" / eolChar) char_:. { return char_; }
 
+@nocache
 singleQuotedString
   = "'" chars:singleQuotedCharacter* "'" { return chars.join(""); }
 
+@nocache
 singleQuotedCharacter
   = simpleSingleQuotedCharacter
   / simpleEscapeSequence
@@ -331,6 +376,7 @@ singleQuotedCharacter
   / unicodeEscapeSequence
   / eolEscapeSequence
 
+@nocache
 simpleSingleQuotedCharacter
   = !("'" / "\\" / eolChar) char_:. { return char_; }
 
@@ -354,6 +400,7 @@ class "character class"
       };
     }
 
+@nocache
 classCharacterRange
   = begin:classCharacter "-" end:classCharacter {
       if (begin.data.charCodeAt(0) > end.data.charCodeAt(0)) {
@@ -369,6 +416,7 @@ classCharacterRange
       };
     }
 
+@nocache
 classCharacter
   = char_:bracketDelimitedCharacter {
       return {
@@ -378,6 +426,7 @@ classCharacter
       };
     }
 
+@nocache
 bracketDelimitedCharacter
   = simpleBracketDelimitedCharacter
   / simpleEscapeSequence
@@ -386,9 +435,11 @@ bracketDelimitedCharacter
   / unicodeEscapeSequence
   / eolEscapeSequence
 
+@nocache
 simpleBracketDelimitedCharacter
   = !("]" / "\\" / eolChar) char_:. { return char_; }
 
+@nocache
 simpleEscapeSequence
   = "\\" !(digit / "x" / "u" / eolChar) char_:. {
       return char_
@@ -400,35 +451,44 @@ simpleEscapeSequence
         .replace("v", "\x0B"); // IE does not recognize "\v".
     }
 
+@nocache
 zeroEscapeSequence
   = "\\0" !digit { return "\x00"; }
 
+@nocache
 hexEscapeSequence
   = "\\x" digits:$(hexDigit hexDigit) {
       return String.fromCharCode(parseInt(digits, 16));
     }
 
+@nocache
 unicodeEscapeSequence
   = "\\u" digits:$(hexDigit hexDigit hexDigit hexDigit) {
       return String.fromCharCode(parseInt(digits, 16));
     }
 
+@nocache
 eolEscapeSequence
   = "\\" eol:eol { return eol; }
 
+@nocache
 digit
   = [0-9]
 
+@nocache
 hexDigit
   = [0-9a-fA-F]
 
+@nocache
 letter
   = lowerCaseLetter
   / upperCaseLetter
 
+@nocache
 lowerCaseLetter
   = [a-z]
 
+@nocache
 upperCaseLetter
   = [A-Z]
 
@@ -439,9 +499,11 @@ comment "comment"
   = singleLineComment
   / multiLineComment
 
+@nocache
 singleLineComment
   = "//" (!eolChar .)*
 
+@nocache
 multiLineComment
   = "/*" (!"*/" .)* "*/"
 
@@ -453,9 +515,11 @@ eol "end of line"
   / "\u2028"
   / "\u2029"
 
+@nocache
 eolChar
   = [\n\r\u2028\u2029]
 
 /* Modeled after ECMA-262, 5th ed., 7.2. */
+@nocache
 whitespace "whitespace"
   = [ \t\v\f\u00A0\uFEFF\u1680\u180E\u2000-\u200A\u202F\u205F\u3000]

@@ -34,5 +34,14 @@ benchmarks = [
       { file: "960.gs/min/960.css",           title: "960.gs - 960.css (minified)"         },
       { file: "960.gs/min/960_24_col.css",    title: "960.gs - 960_24_col.css (minified)"  }
     ]
+  },
+  {
+    id:          "javascript",
+    title:       "JavaScript",
+    tests: [
+      { file: "../vendor/jquery.scrollto/jquery.scrollTo.js",
+                                              title: "jQuery = scrollTo add-on (source)"   },
+      { file: "../../lib/parser.js",          title: "PEG - parser.js (source)"            }
+    ]
   }
 ];

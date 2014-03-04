@@ -2,6 +2,7 @@
 
 /* ===== Syntactical Elements ===== */
 
+@nocache
 start
   = _ object:object { return object; }
 
@@ -53,6 +54,7 @@ string "string"
 chars
   = chars:char+ { return chars.join(""); }
 
+@nocache
 char
   // In the original JSON grammar: "any-Unicode-character-except-"-or-\-or-control-character"
   = [^"\\\0-\x1F\x7f]
@@ -74,21 +76,26 @@ number "number"
   / parts:$(int exp) _      { return parseFloat(parts); }
   / parts:$(int) _          { return parseFloat(parts); }
 
+@nocache
 int
   = digit19 digits
   / digit
   / "-" digit19 digits
   / "-" digit
 
+@nocache
 frac
   = "." digits
 
+@nocache
 exp
   = e digits
 
+@nocache
 digits
   = digit+
 
+@nocache
 e
   = [eE] [+-]?
 
@@ -99,12 +106,15 @@ e
  * FIXME: Define them according to ECMA-262, 5th ed.
  */
 
+@nocache
 digit
   = [0-9]
 
+@nocache
 digit19
   = [1-9]
 
+@nocache
 hexDigit
   = [0-9a-fA-F]
 
@@ -115,5 +125,6 @@ _ "whitespace"
 
 // Whitespace is undefined in the original JSON grammar, so I assume a simple
 // conventional definition consistent with ECMA-262, 5th ed.
+@nocache
 whitespace
   = [ \t\n\r]

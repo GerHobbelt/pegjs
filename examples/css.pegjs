@@ -14,8 +14,9 @@
 
 /* ===== Syntactical Elements ===== */
 
+@nocache
 start
-  = stylesheet:stylesheet comment* { return stylesheet; }
+  = stylesheet:stylesheet comments { return stylesheet; }
 
 stylesheet
   = charset:(CHARSET_SYM STRING ";")? (S / CDO / CDC)*
@@ -315,24 +316,32 @@ nmchar
   / nonascii
   / escape
 
+@nocache
 integer
   = parts:$[0-9]+ { return parts; }
 
+@nocache
 float
   = parts:$([0-9]* "." [0-9]+) { return parts; }
 
+@nocache
 string1
   = '"' chars:([^\n\r\f\\"] / "\\" nl:nl { return nl } / escape)* '"' {
       return chars.join("");
     }
 
+@nocache
 string2
   = "'" chars:([^\n\r\f\\'] / "\\" nl:nl { return nl } / escape)* "'" {
       return chars.join("");
     }
 
+@nocache
 comment
   = "/*" [^*]* "*"+ ([^/*] [^*]* "*"+)* "/"
+
+comments
+  = comment*
 
 ident
   = dash:"-"? nmstart:nmstart nmchars:nmchar* {
@@ -353,122 +362,144 @@ string
 url
   = chars:([!#$%&*-~] / nonascii / escape)* { return chars.join(""); }
 
+@nocache
 s
   = [ \t\r\n\f]+
 
+@nocache
 w
   = s?
 
+@nocache
 nl
   = "\n"
   / "\r\n"
   / "\r"
   / "\f"
 
+@nocache
 A
   = [aA]
   / "\\" "0"? "0"? "0"? "0"? "41" ("\r\n" / [ \t\r\n\f])? { return "A"; }
   / "\\" "0"? "0"? "0"? "0"? "61" ("\r\n" / [ \t\r\n\f])? { return "a"; }
 
+@nocache
 C
   = [cC]
   / "\\" "0"? "0"? "0"? "0"? "43" ("\r\n" / [ \t\r\n\f])? { return "C"; }
   / "\\" "0"? "0"? "0"? "0"? "63" ("\r\n" / [ \t\r\n\f])? { return "c"; }
 
+@nocache
 D
   = [dD]
   / "\\" "0"? "0"? "0"? "0"? "44" ("\r\n" / [ \t\r\n\f])? { return "D"; }
   / "\\" "0"? "0"? "0"? "0"? "64" ("\r\n" / [ \t\r\n\f])? { return "d"; }
 
+@nocache
 E
   = [eE]
   / "\\" "0"? "0"? "0"? "0"? "45" ("\r\n" / [ \t\r\n\f])? { return "E"; }
   / "\\" "0"? "0"? "0"? "0"? "65" ("\r\n" / [ \t\r\n\f])? { return "e"; }
 
+@nocache
 G
   = [gG]
   / "\\" "0"? "0"? "0"? "0"? "47" ("\r\n" / [ \t\r\n\f])? { return "G"; }
   / "\\" "0"? "0"? "0"? "0"? "67" ("\r\n" / [ \t\r\n\f])? { return "g"; }
   / "\\" char_:[gG] { return char_; }
 
+@nocache
 H
   = h:[hH]
   / "\\" "0"? "0"? "0"? "0"? "48" ("\r\n" / [ \t\r\n\f])? { return "H"; }
   / "\\" "0"? "0"? "0"? "0"? "68" ("\r\n" / [ \t\r\n\f])? { return "h"; }
   / "\\" char_:[hH] { return char_; }
 
+@nocache
 I
   = i:[iI]
   / "\\" "0"? "0"? "0"? "0"? "49" ("\r\n" / [ \t\r\n\f])? { return "I"; }
   / "\\" "0"? "0"? "0"? "0"? "69" ("\r\n" / [ \t\r\n\f])? { return "i"; }
   / "\\" char_:[iI] { return char_; }
 
+@nocache
 K
   = [kK]
   / "\\" "0"? "0"? "0"? "0"? "4" [bB] ("\r\n" / [ \t\r\n\f])? { return "K"; }
   / "\\" "0"? "0"? "0"? "0"? "6" [bB] ("\r\n" / [ \t\r\n\f])? { return "k"; }
   / "\\" char_:[kK] { return char_; }
 
+@nocache
 L
   = [lL]
   / "\\" "0"? "0"? "0"? "0"? "4" [cC] ("\r\n" / [ \t\r\n\f])? { return "L"; }
   / "\\" "0"? "0"? "0"? "0"? "6" [cC] ("\r\n" / [ \t\r\n\f])? { return "l"; }
   / "\\" char_:[lL] { return char_; }
 
+@nocache
 M
   = [mM]
   / "\\" "0"? "0"? "0"? "0"? "4" [dD] ("\r\n" / [ \t\r\n\f])? { return "M"; }
   / "\\" "0"? "0"? "0"? "0"? "6" [dD] ("\r\n" / [ \t\r\n\f])? { return "m"; }
   / "\\" char_:[mM] { return char_; }
 
+@nocache
 N
   = [nN]
   / "\\" "0"? "0"? "0"? "0"? "4" [eE] ("\r\n" / [ \t\r\n\f])? { return "N"; }
   / "\\" "0"? "0"? "0"? "0"? "6" [eE] ("\r\n" / [ \t\r\n\f])? { return "n"; }
   / "\\" char_:[nN] { return char_; }
 
+@nocache
 O
   = [oO]
   / "\\" "0"? "0"? "0"? "0"? "4" [fF] ("\r\n" / [ \t\r\n\f])? { return "O"; }
   / "\\" "0"? "0"? "0"? "0"? "6" [fF] ("\r\n" / [ \t\r\n\f])? { return "o"; }
   / "\\" char_:[oO] { return char_; }
 
+@nocache
 P
   = [pP]
   / "\\" "0"? "0"? "0"? "0"? "50" ("\r\n" / [ \t\r\n\f])? { return "P"; }
   / "\\" "0"? "0"? "0"? "0"? "70" ("\r\n" / [ \t\r\n\f])? { return "p"; }
   / "\\" char_:[pP] { return char_; }
 
+@nocache
 R
   = [rR]
   / "\\" "0"? "0"? "0"? "0"? "52" ("\r\n" / [ \t\r\n\f])? { return "R"; }
   / "\\" "0"? "0"? "0"? "0"? "72" ("\r\n" / [ \t\r\n\f])? { return "r"; }
   / "\\" char_:[rR] { return char_; }
 
+@nocache
 S_
   = [sS]
   / "\\" "0"? "0"? "0"? "0"? "53" ("\r\n" / [ \t\r\n\f])? { return "S"; }
   / "\\" "0"? "0"? "0"? "0"? "73" ("\r\n" / [ \t\r\n\f])? { return "s"; }
   / "\\" char_:[sS] { return char_; }
 
+@nocache
 T
   = [tT]
   / "\\" "0"? "0"? "0"? "0"? "54" ("\r\n" / [ \t\r\n\f])? { return "T"; }
   / "\\" "0"? "0"? "0"? "0"? "74" ("\r\n" / [ \t\r\n\f])? { return "t"; }
   / "\\" char_:[tT] { return char_; }
 
+@nocache
 U
   = [uU]
   / "\\" "0"? "0"? "0"? "0"? "55" ("\r\n" / [ \t\r\n\f])? { return "U"; }
   / "\\" "0"? "0"? "0"? "0"? "75" ("\r\n" / [ \t\r\n\f])? { return "u"; }
   / "\\" char_:[uU] { return char_; }
 
+@nocache
 X
   = [xX]
   / "\\" "0"? "0"? "0"? "0"? "58" ("\r\n" / [ \t\r\n\f])? { return "X"; }
   / "\\" "0"? "0"? "0"? "0"? "78" ("\r\n" / [ \t\r\n\f])? { return "x"; }
   / "\\" char_:[xX] { return char_; }
 
+@nocache
 Z
   = [zZ]
   / "\\" "0"? "0"? "0"? "0"? "5" [aA] ("\r\n" / [ \t\r\n\f])? { return "Z"; }
@@ -477,81 +508,82 @@ Z
 
 /* Tokens */
 
+@nocache
 S "whitespace"
-  = comment* s
+  = comments s
 
 CDO "<!--"
-  = comment* "<!--"
+  = comments "<!--"
 
 CDC "-->"
-  = comment* "-->"
+  = comments "-->"
 
 INCLUDES "~="
-  = comment* "~="
+  = comments "~="
 
 DASHMATCH "|="
-  = comment* "|="
+  = comments "|="
 
 STRING "string"
-  = comment* string:string { return string; }
+  = comments string:string { return string; }
 
 IDENT "identifier"
-  = comment* ident:ident { return ident; }
+  = comments ident:ident { return ident; }
 
 HASH "hash"
-  = comment* "#" name:name { return "#" + name; }
+  = comments "#" name:name { return "#" + name; }
 
 IMPORT_SYM "@import"
-  = comment* "@" I M P O R T
+  = comments "@" I M P O R T
 
 PAGE_SYM "@page"
-  = comment* "@" P A G E
+  = comments "@" P A G E
 
 MEDIA_SYM "@media"
-  = comment* "@" M E D I A
+  = comments "@" M E D I A
 
 CHARSET_SYM "@charset"
-  = comment* "@charset "
+  = comments "@charset "
 
 /* Note: We replace "w" with "s" here to avoid infinite recursion. */
 IMPORTANT_SYM "!important"
-  = comment* "!" (s / comment)* I M P O R T A N T { return "!important"; }
+  = comments "!" (s / comment)* I M P O R T A N T { return "!important"; }
 
 EMS "length"
-  = comment* num:num e:E m:M { return num + e + m; }
+  = comments num:num e:E m:M { return num + e + m; }
 
 EXS "length"
-  = comment* num:num e:E x:X { return num + e + x; }
+  = comments num:num e:E x:X { return num + e + x; }
 
 LENGTH "length"
-  = comment* num:num unit:(P X / C M / M M / I N / P T / P C) {
+  = comments num:num unit:(P X / C M / M M / I N / P T / P C) {
       return num + unit.join("");
     }
 
 ANGLE "angle"
-  = comment* num:num unit:(D E G / R A D / G R A D) {
+  = comments num:num unit:(D E G / R A D / G R A D) {
       return num + unit.join("");
     }
 
 TIME "time"
-  = comment* num:num unit:(m:M s:S_ { return m + s; } / S_) {
+  = comments num:num unit:(m:M s:S_ { return m + s; } / S_) {
       return num + unit;
     }
 
 FREQ "frequency"
-  = comment* num:num unit:(H Z / K H Z) { return num + unit.join(""); }
+  = comments num:num unit:(H Z / K H Z) { return num + unit.join(""); }
 
 DIMENSION "dimension"
-  = comment* num:num unit:ident { return num + unit; }
+  = comments num:num unit:ident { return num + unit; }
 
 PERCENTAGE "percentage"
-  = comment* parts:$(num "%") { return parts; }
+  = comments parts:$(num "%") { return parts; }
 
 NUMBER "number"
-  = comment* num:num { return num; }
+  = comments num:num { return num; }
 
 URI "uri"
-  = comment* U R L "(" w value:(string / url) w ")" { return value; }
+  = comments U R L "(" w value:(string / url) w ")" { return value; }
 
 FUNCTION "function"
-  = comment* name:ident "(" { return name; }
+  = comments name:ident "(" { return name; }
