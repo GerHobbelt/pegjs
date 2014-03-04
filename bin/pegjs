@@ -39,6 +39,9 @@ function printHelp() {
   util.puts("                                     to PEG.buildParser");
   util.puts("      --extra-options-file <file>    file with additional options (in JSON");
   util.puts("                                     format) to pass to PEG.buildParser");
+  util.puts("      --statistics                   generate a parser which will collect");
+  util.puts("                                     run-time statistics while parsing any inputs");
+  util.puts("      --elapsed-time                 report the time it took to build the parser");
   util.puts("  -v, --version                      print version information and exit");
   util.puts("  -h, --help                         print help and exit");
 }
@@ -133,6 +136,10 @@ while (args.length > 0 && isOption(args[0])) {
       options.cache = true;
       break;
 
+    case "--statistics":
+      options.collectRunTimeStatistics = true;
+      break;
+
     case "--allowed-start-rules":
       nextArg();
       if (args.length === 0) {
@@ -193,6 +200,10 @@ while (args.length > 0 && isOption(args[0])) {
       addExtraOptions(options, json);
       break;
 
+    case "--elapsed-time":
+      options.reportElapsedTime = true;
+      break;
+
     case "-v":
     case "--version":
       printVersion();
@@ -220,13 +231,13 @@ switch (args.length) {
     process.stdin.resume();
     var inputStream = process.stdin;
     var outputStream = process.stdout;
-    stream(inputStream, outputStream)
+    stream(inputStream, outputStream);
     break;
 
   case 1:
   case 2:
     rwFile(args[0], args[1], function(inputStream, outputStream) {
-      stream(inputStream, outputStream)
+      stream(inputStream, outputStream);
     });
     break;
 
@@ -250,7 +261,6 @@ function rwFile(input, output, cb) {
   });
 
   cb(inputStream, outputStream);
-
 }
 
 /* Files */
@@ -265,6 +275,7 @@ function stream(inputStream, outputStream) {
 
   readStream(inputStream, function(input) {
     var source;
+    var startTime = new Date();
 
     try {
       source = PEG.buildParser(input, options);
@@ -274,6 +285,12 @@ function stream(inputStream, outputStream) {
       } else {
         abort(e.message);
       }
+    }
+
+    var endTime = new Date();
+    var diffTime = (endTime - startTime) / 1000;
+    if (options.reportElapsedTime) {
+      console.log("Parser generated in " + diffTime + " seconds.");
     }
 
     outputStream.write(

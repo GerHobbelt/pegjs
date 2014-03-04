@@ -11,6 +11,7 @@ MODULES = utils                                 \
           compiler/opcodes                      \
           compiler/passes/generate-bytecode     \
           compiler/passes/generate-javascript   \
+          compiler/passes/report-duplicate-rules \
           compiler/passes/remove-proxy-rules    \
           compiler/passes/report-left-recursion \
           compiler/passes/report-missing-rules  \
@@ -53,7 +54,7 @@ all: browser
 
 # Generate the grammar parser
 parser:
-	$(PEGJS) $(PARSER_SRC_FILE) $(PARSER_OUT_FILE)
+	$(PEGJS) --elapsed-time --cache $(PARSER_SRC_FILE) $(PARSER_OUT_FILE)
 
 # Build the browser version of the library
 browser: parser
@@ -124,6 +125,9 @@ spec: parser
 # Run the benchmark suite
 benchmark: parser
 	$(BENCHMARK_RUN)
+
+benchmark-cache: parser
+	$(BENCHMARK_RUN) --cache
 
 # Run JSHint on the source
 hint: parser
