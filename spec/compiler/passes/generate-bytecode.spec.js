@@ -7,7 +7,11 @@ describe("compiler pass |generateBytecode|", function() {
     };
   }
 
-  function constsDetails(consts) { return { consts: consts }; }
+  function constsDetails(consts, actions) {
+    return actions !== undefined
+      ? { consts: consts, actions: [actions] }
+      : { consts: consts };
+  }
 
   describe("for grammar", function() {
     it("generates correct bytecode", function() {
@@ -93,7 +97,7 @@ describe("compiler pass |generateBytecode|", function() {
           14, 0, 2, 2, 18, 0, 19, 1,   // <expression>
           11, 6, 0,                    // IF_NOT_ERROR
           20, 1,                       //   * REPORT_SAVED_POS
-          22, 2, 1, 0,                 //     CALL
+          22, 0, 1, 0,                 //     CALL
           5                            // NIP
         ]));
       });
@@ -101,8 +105,9 @@ describe("compiler pass |generateBytecode|", function() {
       it("defines correct constants", function() {
         expect(pass).toChangeAST(grammar, constsDetails([
           '"a"',
-          '{ type: "literal", value: "a", description: "\\"a\\"" }',
-          'function() { code }'
+          '{ type: "literal", value: "a", description: "\\"a\\"" }'
+        ], [
+          [], ' code '
         ]));
       });
     });
@@ -116,7 +121,7 @@ describe("compiler pass |generateBytecode|", function() {
           14, 0, 2, 2, 18, 0, 19, 1,   // <expression>
           11, 7, 0,                    // IF_NOT_ERROR
           20, 1,                       //   * REPORT_SAVED_POS
-          22, 2, 1, 1, 0,              //     CALL
+          22, 0, 1, 1, 0,              //     CALL
           5                            // NIP
         ]));
       });
@@ -124,8 +129,9 @@ describe("compiler pass |generateBytecode|", function() {
       it("defines correct constants", function() {
         expect(pass).toChangeAST(grammar, constsDetails([
           '"a"',
-          '{ type: "literal", value: "a", description: "\\"a\\"" }',
-          'function(a) { code }'
+          '{ type: "literal", value: "a", description: "\\"a\\"" }'
+        ], [
+          ['a'], ' code '
         ]));
       });
     });
@@ -142,7 +148,7 @@ describe("compiler pass |generateBytecode|", function() {
           14, 5, 2, 2, 18, 5, 19, 6,   //       * <elements[2]>
           11, 10, 5,                   //         IF_NOT_ERROR
           20, 3,                       //           * REPORT_SAVED_POS
-          22, 7, 3, 3, 2, 1, 0,        //             CALL
+          22, 0, 3, 3, 2, 1, 0,        //             CALL
           5,                           //             NIP
           4, 3,                        //           * POP_N
           3,                           //             POP_CURR_POS
@@ -164,8 +170,9 @@ describe("compiler pass |generateBytecode|", function() {
           '"b"',
           '{ type: "literal", value: "b", description: "\\"b\\"" }',
           '"c"',
-          '{ type: "literal", value: "c", description: "\\"c\\"" }',
-          'function(a, b, c) { code }'
+          '{ type: "literal", value: "c", description: "\\"c\\"" }'
+        ], [
+          ['a', 'b', 'c'], ' code '
         ]));
       });
     });
@@ -298,16 +305,16 @@ describe("compiler pass |generateBytecode|", function() {
           22, 0, 0, 0,   // CALL
           9, 3, 3,       // IF
           2,             //   * POP
-          0, 1,          //     PUSH
+          0, 0,          //     PUSH
           2,             //   * POP
-          0, 2           //     PUSH
+          0, 1           //     PUSH
         ]));
       });
 
       it("defines correct constants", function() {
         expect(pass).toChangeAST(
           grammar,
-          constsDetails(['function() { code }', 'void 0', 'peg$FAILED'])
+          constsDetails(['void 0', 'peg$FAILED'], [[], ' code '])
         );
       });
     });
@@ -325,10 +332,10 @@ describe("compiler pass |generateBytecode|", function() {
           14, 5, 2, 2, 18, 5, 19, 6,   //       * <elements[2]>
           11, 28, 5,                   //         IF_NOT_ERROR
           21,                          //           * REPORT_CURR_POS
-          22, 7, 0, 3, 2, 1, 0,        //             CALL
+          22, 0, 0, 3, 2, 1, 0,        //             CALL
           9, 3, 3,                     //             IF
           2,                           //               * POP
-          0, 8,                        //                 PUSH
+          0, 7,                        //                 PUSH
           2,                           //               * POP
           0, 0,                        //                 PUSH
           11, 3, 5,                    //             IF_NOT_ERROR
@@ -358,8 +365,9 @@ describe("compiler pass |generateBytecode|", function() {
           '{ type: "literal", value: "b", description: "\\"b\\"" }',
           '"c"',
           '{ type: "literal", value: "c", description: "\\"c\\"" }',
-          'function(a, b, c) { code }',
           'void 0'
+        ], [
+          ['a', 'b', 'c'], ' code '
         ]));
       });
     });
@@ -375,16 +383,16 @@ describe("compiler pass |generateBytecode|", function() {
           22, 0, 0, 0,   // CALL
           9, 3, 3,       // IF
           2,             //   * POP
-          0, 2,          //     PUSH
+          0, 1,          //     PUSH
           2,             //   * POP
-          0, 1           //     PUSH
+          0, 0           //     PUSH
         ]));
       });
 
       it("defines correct constants", function() {
         expect(pass).toChangeAST(
           grammar,
-          constsDetails(['function() { code }', 'void 0', 'peg$FAILED'])
+          constsDetails(['void 0', 'peg$FAILED'], [[], ' code '])
         );
       });
     });
@@ -402,12 +410,12 @@ describe("compiler pass |generateBytecode|", function() {
           14, 5, 2, 2, 18, 5, 19, 6,   //       * <elements[2]>
           11, 28, 5,                   //         IF_NOT_ERROR
           21,                          //           * REPORT_CURR_POS
-          22, 7, 0, 3, 2, 1, 0,        //             CALL
+          22, 0, 0, 3, 2, 1, 0,        //             CALL
           9, 3, 3,                     //             IF
           2,                           //               * POP
           0, 0,                        //                 PUSH
           2,                           //               * POP
-          0, 8,                        //                 PUSH
+          0, 7,                        //                 PUSH
           11, 3, 5,                    //             IF_NOT_ERROR
           7, 4,                        //               * WRAP
           5,                           //                 NIP
@@ -435,8 +443,9 @@ describe("compiler pass |generateBytecode|", function() {
           '{ type: "literal", value: "b", description: "\\"b\\"" }',
           '"c"',
           '{ type: "literal", value: "c", description: "\\"c\\"" }',
-          'function(a, b, c) { code }',
           'void 0'
+        ], [
+          ['a', 'b', 'c'], ' code '
         ]));
       });
     });
