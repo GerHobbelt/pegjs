@@ -75,7 +75,8 @@ Initializer
   = code:CodeBlock EOS { return { type: "initializer", code: code }; }
 
 Rule
-  = name:IdentifierName __
+  = annotations:Annotation*
+    name:IdentifierName __
     displayName:(StringLiteral __)?
     "=" __
     expression:Expression EOS
@@ -83,6 +84,7 @@ Rule
       return {
         type:        "rule",
         name:        name,
+        annotations: annotations,
         expression:  displayName !== null
           ? {
               type:       "named",
@@ -95,6 +97,18 @@ Rule
 
 Expression
   = ChoiceExpression
+Annotation
+  = "@" __ name:Identifier __ params:Params? {
+    return {
+      name: name,
+      params: params===null?[]:params
+    };
+  };
+Params
+  = "(" __ head:(i:Param "," __ {return i;})* tail:Param? ")" __ {
+    if (tail) head.push(tail); return head;
+  };
+Param = i:Identifier __ {return i;};
 
 ChoiceExpression
   = first:ActionExpression rest:(__ "/" __ ActionExpression)* {
