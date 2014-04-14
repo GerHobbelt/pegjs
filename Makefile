@@ -6,17 +6,17 @@ PEGJS_VERSION = `cat $(VERSION_FILE)`
 
 # Order matters -- dependencies must be listed before modules dependent on them.
 MODULES = utils                                 \
-          grammar-error                         \
-          parser                                \
-          compiler/opcodes                      \
-          compiler/passes/generate-bytecode     \
-          compiler/passes/generate-javascript   \
-          compiler/passes/report-duplicate-rules \
-          compiler/passes/remove-proxy-rules    \
-          compiler/passes/report-left-recursion \
-          compiler/passes/report-missing-rules  \
-          compiler                              \
-          peg
+		  grammar-error                         \
+		  parser                                \
+		  compiler/opcodes                      \
+		  compiler/passes/generate-bytecode     \
+		  compiler/passes/generate-javascript   \
+		  compiler/passes/report-duplicate-rules \
+		  compiler/passes/remove-proxy-rules    \
+		  compiler/passes/report-left-recursion \
+		  compiler/passes/report-missing-rules  \
+		  compiler                              \
+		  peg
 
 # ===== Directories =====
 

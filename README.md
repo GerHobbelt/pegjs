@@ -21,8 +21,8 @@ Features
 Clone Info
 ----------
 
-This [clone](https://github.com/GerHobbelt/pegjs) contains the work done by 
-[Mingun](https://github.com/Mingun/pegjs) and a patch by 
+This [clone](https://github.com/GerHobbelt/pegjs) contains the work done by
+[Mingun](https://github.com/Mingun/pegjs) and a patch by
 [Eric M. Cornelius](https://github.com/EricMCornelius/pegjs).
 
 Getting Started
@@ -194,7 +194,7 @@ braces (“{” and “}”). This code is executed before the generated parser 
 parsing. All variables and functions defined in the initializer are accessible
 in rule actions and semantic predicates. The code inside the initializer can
 access options passed to the parser using the `options` variable. Curly braces
-in the initializer code must be balanced. Let's look at the example grammar 
+in the initializer code must be balanced. Let's look at the example grammar
 from above using a simple initializer.
 
     {
