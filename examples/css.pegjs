@@ -64,7 +64,7 @@ start
 
 stylesheet
   = charset:(CHARSET_SYM STRING ";")? (S / CDO / CDC)*
-    imports:(import (CDO S* / CDC S*)*)*
+    imports:(import_at (CDO S* / CDC S*)*)*
     rules:((ruleset / media / page) (CDO S* / CDC S*)*)*
     {
       return {
@@ -75,7 +75,7 @@ stylesheet
       };
     }
 
-import
+import_at
   = IMPORT_SYM S* href:(STRING / URI) S* media:media_list? ";" S* {
       return {
         type:  "ImportRule",
@@ -162,14 +162,14 @@ selector
   / selector:simple_selector S* { return selector; }
 
 simple_selector
-  = element:element_name qualifiers:(id / class / attrib / pseudo)* {
+  = element:element_name qualifiers:(id / css_class / attrib / pseudo)* {
       return {
         type:       "SimpleSelector",
         element:    element,
         qualifiers: qualifiers
       };
     }
-  / qualifiers:(id / class / attrib / pseudo)+ {
+  / qualifiers:(id / css_class / attrib / pseudo)+ {
       return {
         type:       "SimpleSelector",
         element:    "*",
@@ -180,7 +180,7 @@ simple_selector
 id
   = id:HASH { return { type: "IDSelector", id: id }; }
 
-class
+css_class
   = "." class_:IDENT { return { type: "ClassSelector", class: class_ }; }
 
 element_name
@@ -243,11 +243,11 @@ term
     }
   / value:STRING S* { return { type: "String", value: value }; }
   / value:URI S*    { return { type: "URI",    value: value }; }
-  / function
+  / css_function
   / hexcolor
   / value:IDENT S*  { return { type: "Ident",  value: value }; }
 
-function
+css_function
   = name:FUNCTION S* params:expr ")" S* {
       return { type: "Function", name: name, params: params };
     }
