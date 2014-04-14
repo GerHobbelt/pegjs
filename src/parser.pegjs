@@ -96,7 +96,7 @@ Initializer
 
 @nocache
 Rule
-  = annotations:annotations __
+  = annotations:Annotations
     name:IdentifierName __
     displayName:(StringLiteral __)?
     "=" __
@@ -117,34 +117,36 @@ Rule
         };
       }
 
-@nocache
-annotations
-  = annotation*
+Expression
+  = ChoiceExpression
 
 @nocache
-annotation
-  = "@" name:Identifier params:params? {
+Annotations
+  = Annotation*
+
+@nocache
+Annotation
+  = "@" __ name:Identifier __ params:Params? {
       return {
         name: name,
         region: region(),
-        params: params===null ? [] : params
+        params: params === null ? [] : params
       };
     };
 
 @nocache
-params
-  = "(" head:(i:param "," {return i;})* tail:param? ")" {
+Params
+  = "(" __ head:(i:Param "," __ { return i; })* tail:Param? ")" __ {
       if (tail) {
-        head.push(tail);
+        head.push(tail); 
       }
       return head;
     };
 
 @nocache
-param = Identifier;
-
-Expression
-  = ChoiceExpression
+Param = i:Identifier __ {
+      return i;
+    };
 
 ChoiceExpression
   = first:ActionExpression rest:(__ "/" __ ActionExpression)* {
@@ -208,10 +210,20 @@ PrefixedOperator
 
 SuffixedExpression
   = expression:PrimaryExpression __ operator:SuffixedOperator {
+      return { 
+      	type: OPS_TO_SUFFIXED_TYPES[operator], 
+	region: region(), 
+	expression: expression 
+      };
+    }
+  / expression:PrimaryExpression __ r:Range {
       return {
-        type: OPS_TO_SUFFIXED_TYPES[operator],
-        region: region(),
-        expression: expression
+        type:       "range",
+        region:     region(),
+        min:        r.min,
+        max:        r.max,
+        expression: expression,
+        delimiter:  r.delimiter
       };
     }
   / PrimaryExpression
@@ -220,7 +232,6 @@ SuffixedOperator
   = "?"
   / "*"
   / "+"
-  / range
 
 PrimaryExpression
   = LiteralMatcher
@@ -252,31 +263,29 @@ SemanticPredicateOperator
   = "&"
   / "!"
 
-
-range
-  = "|" r:range2 delimiter:("," PrimaryExpression)? "|" {
-      r.delimiter = delimiter !== null ? delimiter[1] : undefined;
+Range
+  = "|" __ r:Range2 __ delimiter:("," __ PrimaryExpression __)? "|" {
+      r.delimiter = extractOptional(delimiter, 2);
       return r;
-    }
+    };
 
-range2
-  = min:int? ".." max:int? {
+Range2
+  = min:Int? __ ".." __ max:Int? {
       return {
-        min: min !== null ? min : 0,
-        max: max !== null ? max : undefined
+        min: min !== null ? min : 0, 
+	max: max
       };
     }
-  / val:int {
+  / val:Int {
       return {
-        min: val,
-        max: val
+        min: val, 
+	max: val
       };
-    }
+    };
 
-int
-  = value:DecimalNumber {
-    return ParseInt(value, 10);
-  }
+Int = n:$DecimalDigit+ {
+      return parseInt(n, 10);
+    };
 
 
 /* ---- Lexical Grammar ----- */
