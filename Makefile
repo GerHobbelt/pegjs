@@ -5,18 +5,18 @@ PEGJS_VERSION = `cat $(VERSION_FILE)`
 # ===== Modules =====
 
 # Order matters -- dependencies must be listed before modules dependent on them.
-MODULES = utils                                   \
-		  grammar-error                         \
-		  parser                                \
-		  compiler/opcodes                      \
-		  compiler/passes/generate-bytecode     \
-		  compiler/passes/generate-javascript   \
-		  compiler/passes/remove-proxy-rules    \
-		  compiler/passes/report-left-recursion \
-		  compiler/passes/report-missing-rules  \
-          compiler/passes/report-unused-rules     \
-          compiler/passes/report-redefined-rules  \
-		  compiler                              \
+MODULES = utils                                   	\
+		  grammar-error                         	\
+		  parser                                	\
+		  compiler/opcodes                      	\
+		  compiler/passes/generate-bytecode     	\
+		  compiler/passes/generate-javascript   	\
+		  compiler/passes/remove-proxy-rules    	\
+		  compiler/passes/report-left-recursion 	\
+		  compiler/passes/report-missing-rules  	\
+		  compiler/passes/report-unused-rules     	\
+		  compiler/passes/report-redefined-rules  	\
+		  compiler                              	\
 		  peg
 
 # ===== Directories =====
@@ -55,7 +55,7 @@ all: browser
 
 # Generate the grammar parser
 parser:
-	$(PEGJS) --elapsed-time --cache $(PARSER_SRC_FILE) $(PARSER_OUT_FILE)
+	$(PEGJS) --elapsed-time --cache --statistics $(PARSER_SRC_FILE) $(PARSER_OUT_FILE)
 
 # Build the browser version of the library
 browser: parser
@@ -105,8 +105,8 @@ browser: parser
 	  echo ''                                                           >> $(BROWSER_FILE_DEV); \
 	done
 
-	echo '  return modules["peg"]' >> $(BROWSER_FILE_DEV)
-	echo '})();'                   >> $(BROWSER_FILE_DEV)
+	echo '  return modules["peg"];' >> $(BROWSER_FILE_DEV)
+	echo '})();'                    >> $(BROWSER_FILE_DEV)
 
 	$(UGLIFYJS)                 \
 	  --mangle                  \
