@@ -58,9 +58,10 @@
   }
 
   function extractList(list, index) {
-    var result = new Array(list.length), i;
+    var result = new Array(list.length);
+    var i, len;
 
-    for (i = 0; i < list.length; i++) {
+    for (i = 0, len = list.length; i < len; i++) {
       result[i] = list[i][index];
     }
 
@@ -75,7 +76,7 @@
 /* ---- Syntactic Grammar ----- */
 @nocache
 Grammar
-  = __ initializer:(Initializer __)? rules:(Rule __)+ {
+  = __ initializer:(Initializer __)? rules:(Rule __)+ EOF {
       return {
         type:        "grammar",
         region:      region(),
@@ -101,21 +102,21 @@ Rule
     displayName:(StringLiteral __)?
     "=" __
     expression:Expression EOS {
-        return {
-          type:        "rule",
-          region:      region(),
-          name:        name,
-          annotations: annotations,
-          expression:  displayName !== null
-            ? {
-                type:       "named",
-                region:     region(),
-                name:       displayName[0],
-                expression: expression
-              }
-            : expression
-        };
-      }
+      return {
+        type:        "rule",
+        region:      region(),
+        name:        name,
+        annotations: annotations,
+        expression:  displayName !== null
+          ? {
+              type:       "named",
+              region:     region(),
+              name:       displayName[0],
+              expression: expression
+            }
+          : expression
+      };
+    }
 
 Expression
   = ChoiceExpression
@@ -136,9 +137,10 @@ Annotation
 
 @nocache
 Params
-  = "(" __ head:(i:Param "," __ { return i; })* tail:Param? ")" __ {
+  = "(" __ head:(Param "," __)* tail:Param? ")" __ {
+      head = extractList(head, 0);
       if (tail) {
-        head.push(tail); 
+        head.push(tail);
       }
       return head;
     };
@@ -157,7 +159,7 @@ ChoiceExpression
           alternatives: buildList(first, rest, 3)
         }
         : first;
-    }
+    };
 
 ActionExpression
   = expression:SequenceExpression code:(__ CodeBlock)? {
@@ -169,7 +171,7 @@ ActionExpression
           code: code[1]
         }
         : expression;
-    }
+    };
 
 SequenceExpression
   = first:LabeledExpression rest:(__ LabeledExpression)* {
@@ -180,7 +182,7 @@ SequenceExpression
           elements: buildList(first, rest, 1)
         }
         : first;
-    }
+    };
 
 LabeledExpression
   = label:Identifier __ ":" __ expression:PrefixedExpression {
@@ -210,10 +212,10 @@ PrefixedOperator
 
 SuffixedExpression
   = expression:PrimaryExpression __ operator:SuffixedOperator {
-      return { 
-      	type: OPS_TO_SUFFIXED_TYPES[operator], 
-	region: region(), 
-	expression: expression 
+      return {
+        type: OPS_TO_SUFFIXED_TYPES[operator],
+        region: region(),
+        expression: expression
       };
     }
   / expression:PrimaryExpression __ r:Range {
@@ -248,7 +250,7 @@ RuleReferenceExpression
         region: region(),
         name: name
       };
-    }
+    };
 
 SemanticPredicateExpression
   = operator:SemanticPredicateOperator __ code:CodeBlock {
@@ -257,7 +259,7 @@ SemanticPredicateExpression
         region: region(),
         code: code
       };
-    }
+    };
 
 SemanticPredicateOperator
   = "&"
@@ -272,14 +274,14 @@ Range
 Range2
   = min:Int? __ ".." __ max:Int? {
       return {
-        min: min !== null ? min : 0, 
-	max: max
+        min: min !== null ? min : 0,
+        max: max
       };
     }
   / val:Int {
       return {
-        min: val, 
-	max: val
+        min: val,
+        max: val
       };
     };
 
@@ -323,13 +325,15 @@ MultiLineCommentNoLineTerminator
   = "/*" (!("*/" / LineTerminator) SourceCharacter)* "*/"
 
 SingleLineComment
-  = "//" (!LineTerminator SourceCharacter)*
+  = "//" (!LineTerminator SourceCharacter)* LineTerminatorSequence
 
 Identifier
-  = !ReservedWord name:IdentifierName { return name; }
+  = !ReservedWord name:IdentifierName { 
+      return name; 
+    }
   / name:IdentifierName {
       error("Reserved word \"" + name + "\" can't be used as an identifier.");
-    }
+    };
 
 IdentifierName "identifier"
   = first:IdentifierStart rest:IdentifierPart* { return first + rest.join(""); }
@@ -424,7 +428,7 @@ LiteralMatcher "literal"
         value: value,
         ignoreCase: ignoreCase !== null
       };
-    }
+    };
 
 @nocache
 StringLiteral "string"
@@ -676,7 +680,7 @@ _
 
 EOS
   = __ ";"
-  / _ SingleLineComment? LineTerminatorSequence
+  / _ SingleLineComment?
   / __ EOF
 
 EOF
