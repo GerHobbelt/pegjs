@@ -172,41 +172,57 @@ describe("compiler pass |generateBytecode|", function() {
   });
 
   describe("for sequence", function() {
-    var grammar = 'start = "a" "b" "c"';
+    describe("empty", function() {
+      var grammar = 'start = ';
 
-    it("generates correct bytecode", function() {
-      expect(pass).toChangeAST(grammar, bytecodeDetails([
-        1,                           // PUSH_CURR_POS
-        16, 1, 2, 2, 20, 1, 21, 2,   // <elements[0]>
-        11, 35, 4,                   // IF_NOT_ERROR
-        16, 3, 2, 2, 20, 3, 21, 4,   //   * <elements[1]>
-        11, 19, 5,                   //     IF_NOT_ERROR
-        16, 5, 2, 2, 20, 5, 21, 6,   //       * <elements[2]>
-        11, 3, 5,                    //         IF_NOT_ERROR
-        7, 3,                        //           * WRAP
-        5,                           //             NIP
-        4, 3,                        //           * POP_N
-        3,                           //             POP_CURR_POS
-        0, 0,                        //             PUSH
-        4, 2,                        //       * POP_N
-        3,                           //         POP_CURR_POS
-        0, 0,                        //         PUSH
-        2,                           //   * POP
-        3,                           //     POP_CURR_POS
-        0, 0                         //     PUSH
-      ]));
+      it("generates correct bytecode", function() {
+        expect(pass).toChangeAST(grammar, bytecodeDetails([
+          0, 0   // PUSH
+        ]));
+      });
+
+      it("defines correct constants", function() {
+        expect(pass).toChangeAST(grammar, constsDetails(['[]']));
+      });
     });
 
-    it("defines correct constants", function() {
-      expect(pass).toChangeAST(grammar, constsDetails([
-        'peg$FAILED',
-        '"a"',
-        '{ type: "literal", value: "a", description: "\\"a\\"" }',
-        '"b"',
-        '{ type: "literal", value: "b", description: "\\"b\\"" }',
-        '"c"',
-        '{ type: "literal", value: "c", description: "\\"c\\"" }'
-      ]));
+    describe("non-empty", function() {
+      var grammar = 'start = "a" "b" "c"';
+
+      it("generates correct bytecode", function() {
+        expect(pass).toChangeAST(grammar, bytecodeDetails([
+          1,                           // PUSH_CURR_POS
+          16, 1, 2, 2, 20, 1, 21, 2,   // <elements[0]>
+          11, 35, 4,                   // IF_NOT_ERROR
+          16, 3, 2, 2, 20, 3, 21, 4,   //   * <elements[1]>
+          11, 19, 5,                   //     IF_NOT_ERROR
+          16, 5, 2, 2, 20, 5, 21, 6,   //       * <elements[2]>
+          11, 3, 5,                    //         IF_NOT_ERROR
+          7, 3,                        //           * WRAP
+          5,                           //             NIP
+          4, 3,                        //           * POP_N
+          3,                           //             POP_CURR_POS
+          0, 0,                        //             PUSH
+          4, 2,                        //       * POP_N
+          3,                           //         POP_CURR_POS
+          0, 0,                        //         PUSH
+          2,                           //   * POP
+          3,                           //     POP_CURR_POS
+          0, 0                         //     PUSH
+        ]));
+      });
+
+      it("defines correct constants", function() {
+        expect(pass).toChangeAST(grammar, constsDetails([
+          'peg$FAILED',
+          '"a"',
+          '{ type: "literal", value: "a", description: "\\"a\\"" }',
+          '"b"',
+          '{ type: "literal", value: "b", description: "\\"b\\"" }',
+          '"c"',
+          '{ type: "literal", value: "c", description: "\\"c\\"" }'
+        ]));
+      });
     });
   });
 

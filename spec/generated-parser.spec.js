@@ -393,7 +393,13 @@ describe("generated parser", function() {
     });
 
     describe("sequence matching", function() {
-      it("matches correctly", function() {
+      it("matches empty sequence correctly", function() {
+        var parser = PEG.buildParser('start = ', options);
+
+        expect(parser).toParse("", []);
+      });
+
+      it("matches non-empty sequence correctly", function() {
         var parser = PEG.buildParser('start = "a" "b" "c"', options);
 
         expect(parser).toParse("abc", ["a", "b", "c"]);
