@@ -1,130 +1,150 @@
-/* JSON parser based on the grammar described at http://json.org/. */
+/*
+ * JSON Grammar
+ * ============
+ *
+ * Based on the grammar from RFC 7159 [1].
+ *
+ * Note that JSON is also specified in ECMA-262 [2], ECMA-404 [3], and on the
+ * JSON website [4] (somewhat informally). The RFC seems the most authoritative
+ * source, which is confirmed e.g. by [5].
+ *
+ * [1] http://tools.ietf.org/html/rfc7159
+ * [2] http://www.ecma-international.org/publications/standards/Ecma-262.htm
+ * [3] http://www.ecma-international.org/publications/standards/Ecma-404.htm
+ * [4] http://json.org/
+ * [5] https://www.tbray.org/ongoing/When/201x/2014/03/05/RFC7159-JSON
+ */
 
-/* ===== Syntactical Elements ===== */
+/* ----- 2. JSON Grammar ----- */
 
 @nocache
-start
-  = _ object:object { return object; }
+JSON_text
+  = ws value:value ws { return value; }
 
-object
-  = "{" _ "}" _                 { return {};      }
-  / "{" _ members:members "}" _ { return members; }
+begin_array     = ws "[" ws
+begin_object    = ws "{" ws
+end_array       = ws "]" ws
+end_object      = ws "}" ws
+name_separator  = ws ":" ws
+value_separator = ws "," ws
 
-members
-  = head:pair tail:("," _ pair)* {
-      var result = {};
-      result[head[0]] = head[1];
-      for (var i = 0; i < tail.length; i++) {
-        result[tail[i][2][0]] = tail[i][2][1];
-      }
-      return result;
-    }
+ws "whitespace" = [ \t\n\r]*
 
-pair
-  = name:string ":" _ value:value { return [name, value]; }
-
-array
-  = "[" _ "]" _                   { return [];       }
-  / "[" _ elements:elements "]" _ { return elements; }
-
-elements
-  = head:value tail:("," _ value)* {
-      var result = [head];
-      for (var i = 0; i < tail.length; i++) {
-        result.push(tail[i][2]);
-      }
-      return result;
-    }
+/* ----- 3. Values ----- */
 
 value
-  = string
-  / number
+  = false
+  / null
+  / true
   / object
   / array
-  / "true" _  { return true;  }
-  / "false" _ { return false; }
-  / "null" _  { return null;  }
+  / number
+  / string
 
-/* ===== Lexical Elements ===== */
+false = "false" { return false; }
+null  = "null"  { return null;  }
+true  = "true"  { return true;  }
+
+/* ----- 4. Objects ----- */
+
+object
+  = begin_object
+    members:(
+      first:member
+      rest:(value_separator m:member { return m; })*
+      {
+        var result = {}, i;
+
+        result[first.name] = first.value;
+
+        for (i = 0; i < rest.length; i++) {
+          result[rest[i].name] = rest[i].value;
+        }
+
+        return result;
+      }
+    )?
+    end_object
+    { return members !== null ? members: {}; }
+
+member
+  = name:string name_separator value:value {
+      return { name: name, value: value };
+    }
+
+/* ----- 5. Arrays ----- */
+
+array
+  = begin_array
+    values:(
+      first:value
+      rest:(value_separator v:value { return v; })*
+      { return [first].concat(rest); }
+    )?
+    end_array
+    { return values !== null ? values : []; }
+
+/* ----- 6. Numbers ----- */
+
+number "number"
+  = minus? int frac? exp? { return parseFloat(text()); }
+
+@nocache
+decimal_point = "."
+@nocache
+digit1_9      = [1-9]
+@nocache
+e             = [eE]
+@nocache
+exp           = e (minus / plus)? DIGIT+
+@nocache
+frac          = decimal_point DIGIT+
+@nocache
+int           = zero / (digit1_9 DIGIT*)
+@nocache
+minus         = "-"
+@nocache
+plus          = "+"
+@nocache
+zero          = "0"
+
+/* ----- 7. Strings ----- */
 
 string "string"
-  = '"' '"' _             { return "";    }
-  / '"' chars:chars '"' _ { return chars; }
-
-chars
-  = chars:char+ { return chars.join(""); }
+  = quotation_mark chars:char* quotation_mark { return chars.join(""); }
 
 @nocache
 char
-  // In the original JSON grammar: "any-Unicode-character-except-"-or-\-or-control-character"
-  = [^"\\\0-\x1F\x7f]
-  / '\\"'  { return '"';  }
-  / "\\\\" { return "\\"; }
-  / "\\/"  { return "/";  }
-  / "\\b"  { return "\b"; }
-  / "\\f"  { return "\f"; }
-  / "\\n"  { return "\n"; }
-  / "\\r"  { return "\r"; }
-  / "\\t"  { return "\t"; }
-  / "\\u" digits:$(hexDigit hexDigit hexDigit hexDigit) {
-      return String.fromCharCode(parseInt(digits, 16));
-    }
-
-number "number"
-  = parts:$(int frac exp) _ { return parseFloat(parts); }
-  / parts:$(int frac) _     { return parseFloat(parts); }
-  / parts:$(int exp) _      { return parseFloat(parts); }
-  / parts:$(int) _          { return parseFloat(parts); }
+  = unescaped
+  / escape
+    sequence:(
+        '"'
+      / "\\"
+      / "/"
+      / "b" { return "\b"; }
+      / "f" { return "\f"; }
+      / "n" { return "\n"; }
+      / "r" { return "\r"; }
+      / "t" { return "\t"; }
+      / "u" digits:$(HEXDIG HEXDIG HEXDIG HEXDIG) {
+          return String.fromCharCode(parseInt(digits, 16));
+        }
+    )
+    { return sequence; }
 
 @nocache
-int
-  = digit19 digits
-  / digit
-  / "-" digit19 digits
-  / "-" digit
+escape         = "\\"
 
 @nocache
-frac
-  = "." digits
+quotation_mark = '"'
 
 @nocache
-exp
-  = e digits
+unescaped      = [\x20-\x21\x23-\x5B\x5D-\u10FFFF]
 
+/* ----- Core ABNF Rules ----- */
+
+/* See RFC 4234, Appendix B (http://tools.ietf.org/html/rfc4627). */
 @nocache
-digits
-  = digit+
-
+DIGIT  = [0-9]
 @nocache
-e
-  = [eE] [+-]?
-
-/*
- * The following rules are not present in the original JSON gramar, but they are
- * assumed to exist implicitly.
- *
- * FIXME: Define them according to ECMA-262, 5th ed.
- */
-
-@nocache
-digit
-  = [0-9]
-
-@nocache
-digit19
-  = [1-9]
-
-@nocache
-hexDigit
-  = [0-9a-fA-F]
-
-/* ===== Whitespace ===== */
-
-_ "whitespace"
-  = whitespace*
-
-// Whitespace is undefined in the original JSON grammar, so I assume a simple
-// conventional definition consistent with ECMA-262, 5th ed.
-@nocache
-whitespace
-  = [ \t\n\r]
+HEXDIG = [0-9a-f]i
