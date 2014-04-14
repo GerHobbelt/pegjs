@@ -11,7 +11,6 @@ MODULES = utils                                   \
 		  compiler/opcodes                      \
 		  compiler/passes/generate-bytecode     \
 		  compiler/passes/generate-javascript   \
-		  compiler/passes/report-duplicate-rules \
 		  compiler/passes/remove-proxy-rules    \
 		  compiler/passes/report-left-recursion \
 		  compiler/passes/report-missing-rules  \
