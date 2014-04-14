@@ -293,6 +293,24 @@ function stream(inputStream, outputStream) {
       console.log("Parser generated in " + diffTime + " seconds.");
     }
 
+    if (options.collectRunTimeStatistics && PEG.parser && PEG.parser.getStatistics) {
+      var stats = PEG.parser.getStatistics();
+      console.log("### Run-time Cache Hit Statistics: rules which used the cache:");
+      for (var f = 0, slen = stats.counters.length; f < slen; f++) {
+        if (stats.counters[f]) {
+          console.log("  Rule: " + stats.rulenames[f] + ":\t" + (stats.counters[f] ? stats.counters[f] : "---"));
+        }
+      }
+      /*
+      console.log("### Run-time Cache Hit Statistics: rules which did NOT use the cache:");
+      for (var f = 0, slen = stats.counters.length; f < slen; f++) {
+        if (!stats.counters[f]) {
+          console.log("  " + stats.rulenames[f]);
+        }
+      }
+      */
+    }
+
     outputStream.write(
       exportVar !== "" ? exportVar + " = " + source + ";\n" : source + "\n"
     );
