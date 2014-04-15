@@ -327,9 +327,6 @@ SingleLineComment
 Identifier
   = !ReservedWord name:IdentifierName { 
       return name; 
-    }
-  / name:IdentifierName {
-      error("Reserved word \"" + name + "\" can't be used as an identifier.");
     };
 
 @cache
