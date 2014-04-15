@@ -7,7 +7,11 @@ describe("compiler pass |generateBytecode|", function() {
     };
   }
 
-  function constsDetails(consts) { return { consts: consts }; }
+  function constsDetails(consts, actions) {
+    return actions !== undefined
+      ? { consts: consts, actions: [actions] }
+      : { consts: consts };
+  }
 
   describe("for grammar", function() {
     it("generates correct bytecode", function() {
@@ -93,7 +97,7 @@ describe("compiler pass |generateBytecode|", function() {
           16, 0, 2, 2, 20, 0, 21, 1,   // <expression>
           11, 6, 0,                    // IF_NOT_ERROR
           22, 1,                       //   * REPORT_SAVED_POS
-          24, 2, 1, 0,                 //     CALL
+          24, 0, 1, 0,                 //     CALL
           5                            // NIP
         ]));
       });
@@ -101,8 +105,9 @@ describe("compiler pass |generateBytecode|", function() {
       it("defines correct constants", function() {
         expect(pass).toChangeAST(grammar, constsDetails([
           '"a"',
-          '{ type: "literal", value: "a", description: "\\"a\\"" }',
-          'function() { code }'
+          '{ type: "literal", value: "a", description: "\\"a\\"" }'
+        ], [
+          [], ' code '
         ]));
       });
     });
@@ -116,7 +121,7 @@ describe("compiler pass |generateBytecode|", function() {
           16, 0, 2, 2, 20, 0, 21, 1,   // <expression>
           11, 7, 0,                    // IF_NOT_ERROR
           22, 1,                       //   * REPORT_SAVED_POS
-          24, 2, 1, 1, 0,              //     CALL
+          24, 0, 1, 1, 0,              //     CALL
           5                            // NIP
         ]));
       });
@@ -124,8 +129,9 @@ describe("compiler pass |generateBytecode|", function() {
       it("defines correct constants", function() {
         expect(pass).toChangeAST(grammar, constsDetails([
           '"a"',
-          '{ type: "literal", value: "a", description: "\\"a\\"" }',
-          'function(a) { code }'
+          '{ type: "literal", value: "a", description: "\\"a\\"" }'
+        ], [
+          ['a'], ' code '
         ]));
       });
     });
@@ -142,7 +148,7 @@ describe("compiler pass |generateBytecode|", function() {
           16, 5, 2, 2, 20, 5, 21, 6,   //       * <elements[2]>
           11, 10, 5,                   //         IF_NOT_ERROR
           22, 3,                       //           * REPORT_SAVED_POS
-          24, 7, 3, 3, 2, 1, 0,        //             CALL
+          24, 0, 3, 3, 2, 1, 0,        //             CALL
           5,                           //             NIP
           4, 3,                        //           * POP_N
           3,                           //             POP_CURR_POS
@@ -164,8 +170,9 @@ describe("compiler pass |generateBytecode|", function() {
           '"b"',
           '{ type: "literal", value: "b", description: "\\"b\\"" }',
           '"c"',
-          '{ type: "literal", value: "c", description: "\\"c\\"" }',
-          'function(a, b, c) { code }'
+          '{ type: "literal", value: "c", description: "\\"c\\"" }'
+        ], [
+          ['a', 'b', 'c'], ' code '
         ]));
       });
     });
@@ -316,16 +323,16 @@ describe("compiler pass |generateBytecode|", function() {
           27,            // SILENT_FAILS_OFF
           9, 3, 3,       // IF
           2,             //   * POP
-          0, 1,          //     PUSH
+          0, 0,          //     PUSH
           2,             //   * POP
-          0, 2           //     PUSH
+          0, 1           //     PUSH
         ]));
       });
 
       it("defines correct constants", function() {
         expect(pass).toChangeAST(
           grammar,
-          constsDetails(['function() { code }', 'void 0', 'peg$FAILED'])
+          constsDetails(['void 0', 'peg$FAILED'], [[], ' code '])
         );
       });
     });
@@ -344,11 +351,11 @@ describe("compiler pass |generateBytecode|", function() {
           11, 30, 5,                   //         IF_NOT_ERROR
           23,                          //           * REPORT_CURR_POS
           26,                          //             SILENT_FAILS_ON
-          24, 7, 0, 3, 2, 1, 0,        //             CALL
+          24, 0, 0, 3, 2, 1, 0,        //             CALL
           27,                          //             SILENT_FAILS_OFF
           9, 3, 3,                     //             IF
           2,                           //               * POP
-          0, 8,                        //                 PUSH
+          0, 7,                        //                 PUSH
           2,                           //               * POP
           0, 0,                        //                 PUSH
           11, 3, 5,                    //             IF_NOT_ERROR
@@ -378,8 +385,9 @@ describe("compiler pass |generateBytecode|", function() {
           '{ type: "literal", value: "b", description: "\\"b\\"" }',
           '"c"',
           '{ type: "literal", value: "c", description: "\\"c\\"" }',
-          'function(a, b, c) { code }',
           'void 0'
+        ], [
+          ['a', 'b', 'c'], ' code '
         ]));
       });
     });
@@ -397,16 +405,16 @@ describe("compiler pass |generateBytecode|", function() {
           27,            // SILENT_FAILS_OFF
           9, 3, 3,       // IF
           2,             //   * POP
-          0, 2,          //     PUSH
+          0, 1,          //     PUSH
           2,             //   * POP
-          0, 1           //     PUSH
+          0, 0           //     PUSH
         ]));
       });
 
       it("defines correct constants", function() {
         expect(pass).toChangeAST(
           grammar,
-          constsDetails(['function() { code }', 'void 0', 'peg$FAILED'])
+          constsDetails(['void 0', 'peg$FAILED'], [[], ' code '])
         );
       });
     });
@@ -425,13 +433,13 @@ describe("compiler pass |generateBytecode|", function() {
           11, 30, 5,                   //         IF_NOT_ERROR
           23,                          //           * REPORT_CURR_POS
           26,                          //             SILENT_FAILS_ON
-          24, 7, 0, 3, 2, 1, 0,        //             CALL
+          24, 0, 0, 3, 2, 1, 0,        //             CALL
           27,                          //             SILENT_FAILS_OFF
           9, 3, 3,                     //             IF
           2,                           //               * POP
           0, 0,                        //                 PUSH
           2,                           //               * POP
-          0, 8,                        //                 PUSH
+          0, 7,                        //                 PUSH
           11, 3, 5,                    //             IF_NOT_ERROR
           7, 4,                        //               * WRAP
           5,                           //                 NIP
@@ -459,8 +467,9 @@ describe("compiler pass |generateBytecode|", function() {
           '{ type: "literal", value: "b", description: "\\"b\\"" }',
           '"c"',
           '{ type: "literal", value: "c", description: "\\"c\\"" }',
-          'function(a, b, c) { code }',
           'void 0'
+        ], [
+          ['a', 'b', 'c'], ' code '
         ]));
       });
     });
