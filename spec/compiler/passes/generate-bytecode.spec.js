@@ -184,8 +184,8 @@ describe("compiler pass |generateBytecode|", function() {
 
       it("does fail the parse with an error", function() {
         expect(function () {
-          var parser = PEG.buildParser(grammar, options);
-        }).toThrow('SyntaxError');
+          var parser = PEG.buildParser(grammar);
+        }).toThrow('Expected "!", "$", "&", "(", ".", character class, comment, end of line, identifier, literal or whitespace but end of input found.');
       });
 
       xit("generates correct bytecode", function() {
