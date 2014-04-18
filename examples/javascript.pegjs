@@ -109,7 +109,6 @@ Start
 
 /* ----- A.1 Lexical Grammar ----- */
 
-@nocache
 SourceCharacter
   = .
 
@@ -136,7 +135,6 @@ Comment "comment"
   = MultiLineComment
   / SingleLineComment
 
-@nocache
 MultiLineComment
   = "/*" (!"*/" SourceCharacter)* "*/"
 
@@ -171,7 +169,6 @@ IdentifierPart
   / "\u200C"
   / "\u200D"
 
-@nocache
 UnicodeLetter
   = Lu
   / Ll
@@ -274,11 +271,9 @@ DecimalIntegerLiteral
   = "0"
   / NonZeroDigit DecimalDigit*
 
-@nocache
 DecimalDigit
   = [0-9]
 
-@nocache
 NonZeroDigit
   = [1-9]
 
@@ -296,7 +291,6 @@ HexIntegerLiteral
       return { type: "Literal", value: parseInt(digits, 16) };
      }
 
-@nocache
 HexDigit
   = [0-9a-f]i
 
@@ -1338,7 +1332,6 @@ FunctionBody
       };
     }
 
-@nocache
 Program
   = body:SourceElements? {
       return {

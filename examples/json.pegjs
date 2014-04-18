@@ -17,7 +17,6 @@
 
 /* ----- 2. JSON Grammar ----- */
 
-@nocache
 JSON_text
   = ws value:value ws { return value; }
 
@@ -89,23 +88,14 @@ Array
 Number "number"
   = minus? int frac? exp? { return parseFloat(text()); }
 
-@nocache
 decimal_point = "."
-@nocache
 digit1_9      = [1-9]
-@nocache
 e             = [eE]
-@nocache
 exp           = e (minus / plus)? DIGIT+
-@nocache
 frac          = decimal_point DIGIT+
-@nocache
 int           = zero / (digit1_9 DIGIT*)
-@nocache
 minus         = "-"
-@nocache
 plus          = "+"
-@nocache
 zero          = "0"
 
 /* ----- 7. Strings ----- */
@@ -113,7 +103,6 @@ zero          = "0"
 String "string"
   = quotation_mark chars:char* quotation_mark { return chars.join(""); }
 
-@nocache
 char
   = unescaped
   / escape
@@ -132,19 +121,14 @@ char
     )
     { return sequence; }
 
-@nocache
 escape         = "\\"
 
-@nocache
 quotation_mark = '"'
 
-@nocache
 unescaped      = [\x20-\x21\x23-\x5B\x5D-\u10FFFF]
 
 /* ----- Core ABNF Rules ----- */
 
 /* See RFC 4234, Appendix B (http://tools.ietf.org/html/rfc4627). */
-@nocache
 DIGIT  = [0-9]
-@nocache
 HEXDIG = [0-9a-f]i
