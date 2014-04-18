@@ -1,13 +1,34 @@
 describe("compiler pass |reportRedefinedRules|", function() {
   var pass = PEG.compiler.passes.check.reportRedefinedRules;
+  function construct(constructor, args) {
+    function F() {
+      return constructor.apply(this, args);
+    }
+    F.prototype = constructor.prototype;
+    return new F();
+  }
+  var collector = {
+    emitFatalError: function() {
+      throw construct(PEG.GrammarError, arguments);
+    },
+    emitError: function() {
+      throw construct(PEG.GrammarError, arguments);
+    },
+    emitWarning: function() {
+      throw construct(PEG.GrammarError, arguments);
+    },
+    emitInfo: function() {
+      throw construct(PEG.GrammarError, arguments);
+    }
+  };
 
   beforeEach(function() {
     this.addMatchers({
       toReportRedefinedRuleIn: function(grammar, line, column, line2, column2) {
-        var ast = PEG.parser.parse(grammar);
-
         try {
-          this.actual(ast);
+          var ast = PEG.parser.parse(grammar);
+
+          this.actual(ast, {collector: collector});
 
           this.message = function() {
             return "Expected the pass to report a redefined rule for grammar "
@@ -32,7 +53,7 @@ describe("compiler pass |reportRedefinedRules|", function() {
             };
           }
 
-          return e.message === 'Line '+line+', column '+column+': Rule "redefined" is defined at least twice. (First definition is at line '+line2+', column '+column2+'.)';
+          return e.message === 'Line '+line+', column '+column+': Rule "redefined" redefined; previously defined in line '+line2+', column '+column2+'.';
         }
       }
     });

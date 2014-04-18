@@ -20,16 +20,16 @@ describe("compiler pass |reportUnusedRules|", function() {
       throw construct(PEG.GrammarError, arguments);
     },
     emitInfo: function() {
-      //throw construct(PEG.GrammarError, arguments);
+      throw construct(PEG.GrammarError, arguments);
     }
   };
 
   beforeEach(function() {
     this.addMatchers({
       toReportUnusedRuleIn: function(grammar, line, column) {
-        var ast = PEG.parser.parse(grammar);
-
         try {
+          var ast = PEG.parser.parse(grammar);
+
           this.actual(ast, {collector: collector});
 
           this.message = function() {
@@ -55,69 +55,69 @@ describe("compiler pass |reportUnusedRules|", function() {
             };
           }
 
-          return e.message === 'Line '+line+', column '+column+': Referenced rule "unused" does not exist.';
+          return e.message === 'Line '+line+', column '+column+': Rule "start" is not used.';
         }
       }
     });
   });
 
   it("reports unused rule referenced from a rule", function() {
-    expect(pass).toReportUnusedRuleIn('start = unused', 1, 9);
+    expect(pass).toReportUnusedRuleIn('start = unused', 1, 1);
   });
 
   it("reports unused rule referenced from a named", function() {
-    expect(pass).toReportUnusedRuleIn('start "start" = unused', 1, 17);
+    expect(pass).toReportUnusedRuleIn('start "start" = unused', 1, 1);
   });
 
   it("reports unused rule referenced from a choice", function() {
-    expect(pass).toReportUnusedRuleIn('start = unused / "a" / "b"', 1, 9);
-    expect(pass).toReportUnusedRuleIn('start = "a" / "b" / unused', 1, 21);
+    expect(pass).toReportUnusedRuleIn('start = unused / "a" / "b"', 1, 1);
+    expect(pass).toReportUnusedRuleIn('start = "a" / "b" / unused', 1, 1);
   });
 
   it("reports unused rule referenced from an action", function() {
-    expect(pass).toReportUnusedRuleIn('start = unused { }', 1, 9);
+    expect(pass).toReportUnusedRuleIn('start = unused { }', 1, 1);
   });
 
   it("reports unused rule referenced from a sequence", function() {
-    expect(pass).toReportUnusedRuleIn('start = unused "a" "b"', 1, 9);
-    expect(pass).toReportUnusedRuleIn('start = "a" "b" unused', 1, 17);
+    expect(pass).toReportUnusedRuleIn('start = unused "a" "b"', 1, 1);
+    expect(pass).toReportUnusedRuleIn('start = "a" "b" unused', 1, 1);
   });
 
   it("reports unused rule referenced from a labeled", function() {
-    expect(pass).toReportUnusedRuleIn('start = label:unused', 1, 15);
+    expect(pass).toReportUnusedRuleIn('start = label:unused', 1, 1);
   });
 
   it("reports unused rule referenced from a text", function() {
-    expect(pass).toReportUnusedRuleIn('start = $unused', 1, 10);
+    expect(pass).toReportUnusedRuleIn('start = $unused', 1, 1);
   });
 
   it("reports unused rule referenced from a simple and", function() {
-    expect(pass).toReportUnusedRuleIn('start = &unused', 1, 10);
+    expect(pass).toReportUnusedRuleIn('start = &unused', 1, 1);
   });
 
   it("reports unused rule referenced from a simple not", function() {
-    expect(pass).toReportUnusedRuleIn('start = !unused', 1, 10);
+    expect(pass).toReportUnusedRuleIn('start = !unused', 1, 1);
   });
 
   it("reports unused rule referenced from an optional", function() {
-    expect(pass).toReportUnusedRuleIn('start = unused?', 1, 9);
+    expect(pass).toReportUnusedRuleIn('start = unused?', 1, 1);
   });
 
   it("reports unused rule referenced from a zero or more", function() {
-    expect(pass).toReportUnusedRuleIn('start = unused*', 1, 9);
+    expect(pass).toReportUnusedRuleIn('start = unused*', 1, 1);
   });
 
   it("reports unused rule referenced from a one or more", function() {
-    expect(pass).toReportUnusedRuleIn('start = unused+', 1, 9);
+    expect(pass).toReportUnusedRuleIn('start = unused+', 1, 1);
   });
 
   describe("reports unused rule referenced from a range", function() {
     it("expression", function() {
-      expect(pass).toReportUnusedRuleIn('start = unused|2..3|', 1, 9);
+      expect(pass).toReportUnusedRuleIn('start = unused|2..3|', 1, 1);
     });
 
     it("delimiter", function() {
-      expect(pass).toReportUnusedRuleIn('start = "a"|2..3, unused|', 1, 19);
+      expect(pass).toReportUnusedRuleIn('start = "a"|2..3, unused|', 1, 1);
     });
   });
 });
