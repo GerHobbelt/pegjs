@@ -143,7 +143,9 @@ describe("PEG.js grammar parser", function() {
             return functions[node.type].apply(null, arguments);
           };
         }
-        function rm(node) {delete node.region;}
+        function rm(node) {
+          delete node.region;
+        }
         function doInExpression(node) {
           rm(node);
           removeRegionKey(node.expression);
@@ -151,10 +153,10 @@ describe("PEG.js grammar parser", function() {
         function doInSubnodes(propertyName) {
           return function(node) {
             rm(node);
-            var arr = node[propertyName];
+            var arr = node[propertyName] || [];
             for (var i = 0; i < arr.length; ++i) {
               removeRegionKey(arr[i]);
-            };
+            }
           };
         }
         var removeRegionKey = buildNodeVisitor({
@@ -165,7 +167,11 @@ describe("PEG.js grammar parser", function() {
             }
           },
           initializer:  rm,
-          rule:         doInExpression,
+          annotation:   rm,
+          rule:         function(node) {
+            doInSubnodes("annotations")(node);
+            doInExpression(node);
+          },
           named:        doInExpression,
           choice:       doInSubnodes("alternatives"),
           action:       doInExpression,
@@ -194,7 +200,7 @@ describe("PEG.js grammar parser", function() {
 
         try {
           result = PEG.parser.parse(this.actual);
-          // Remove |node.region| from each node, becouse we don't check it there.
+          // Remove |node.region| from each node, because we don't check it there.
           removeRegionKey(result);
 
           this.message = function() {
@@ -720,20 +726,20 @@ describe("PEG.js grammar parser", function() {
   /* Annotations */
   it("parses Annotations", function() {
     var grammar = oneRuleGrammar(literalAbcd);
-    grammar.rules[0].annotations.push({ name: 'Annotation', params: [] });
+    grammar.rules[0].annotations.push({ type: 'annotation', name: 'Annotation', params: [] });
     expect('@Annotation start = "abcd"').toParseAs(grammar);
     expect('@Annotation\nstart = "abcd"').toParseAs(grammar);
     expect('@Annotation()start = "abcd"').toParseAs(grammar);
 
-    grammar.rules[0].annotations.push({ name: 'Annotation2', params: [] });
+    grammar.rules[0].annotations.push({ type: 'annotation', name: 'Annotation2', params: [] });
     expect('@Annotation @Annotation2 start = "abcd"').toParseAs(grammar);
     expect('@Annotation\n@Annotation2 start = "abcd"').toParseAs(grammar);
     expect('@Annotation()@Annotation2 start = "abcd"').toParseAs(grammar);
 
-    grammar.rules[0].annotations = [{ name: 'Annotation', params: ['a'] }];
+    grammar.rules[0].annotations = [{ type: 'annotation', name: 'Annotation', params: ['a'] }];
     expect('@Annotation(a) start = "abcd"').toParseAs(grammar);
 
-    grammar.rules[0].annotations = [{ name: 'Annotation', params: ['a', 'b'] }];
+    grammar.rules[0].annotations = [{ type: 'annotation', name: 'Annotation', params: ['a', 'b'] }];
     expect('@Annotation(a,b)start = "abcd"').toParseAs(grammar);
     expect('@Annotation(a,b,)start = "abcd"').toParseAs(grammar);
   });
@@ -773,20 +779,20 @@ describe("PEG.js grammar parser", function() {
   /* Annotations */
   it("parses annotations", function() {
     var grammar = oneRuleGrammar(literalAbcd);
-    grammar.rules[0].annotations.push({ name: 'Annotation', params: [] });
+    grammar.rules[0].annotations.push({ type: 'annotation', name: 'Annotation', params: [] });
     expect('@Annotation start = "abcd"').toParseAs(grammar);
     expect('@Annotation\nstart = "abcd"').toParseAs(grammar);
     expect('@Annotation()start = "abcd"').toParseAs(grammar);
 
-    grammar.rules[0].annotations.push({ name: 'Annotation2', params: [] });
+    grammar.rules[0].annotations.push({ type: 'annotation', name: 'Annotation2', params: [] });
     expect('@Annotation @Annotation2 start = "abcd"').toParseAs(grammar);
     expect('@Annotation\n@Annotation2 start = "abcd"').toParseAs(grammar);
     expect('@Annotation()@Annotation2 start = "abcd"').toParseAs(grammar);
 
-    grammar.rules[0].annotations = [{ name: 'Annotation', params: ['a'] }];
+    grammar.rules[0].annotations = [{ type: 'annotation', name: 'Annotation', params: ['a'] }];
     expect('@Annotation(a) start = "abcd"').toParseAs(grammar);
 
-    grammar.rules[0].annotations = [{ name: 'Annotation', params: ['a', 'b'] }];
+    grammar.rules[0].annotations = [{ type: 'annotation', name: 'Annotation', params: ['a', 'b'] }];
     expect('@Annotation(a,b)start = "abcd"').toParseAs(grammar);
     expect('@Annotation(a,b,)start = "abcd"').toParseAs(grammar);
   });
@@ -798,21 +804,21 @@ describe("PEG.js grammar parser", function() {
       min:        0,
       max:        3,
       expression: literalAbcd,
-      delimiter:  undefined
+      delimiter:  null
     }));
     expect('start = "abcd"|2.. |').toParseAs(oneRuleGrammar({
       type:       "range",
       min:        2,
-      max:        undefined,
+      max:        null,
       expression: literalAbcd,
-      delimiter:  undefined
+      delimiter:  null
     }));
     expect('start = "abcd"|2..3|').toParseAs(oneRuleGrammar({
       type:       "range",
       min:        2,
       max:        3,
       expression: literalAbcd,
-      delimiter:  undefined
+      delimiter:  null
     }));
     expect('start = "abcd"| ..3, "efgh"|').toParseAs(oneRuleGrammar({
       type:       "range",
@@ -824,7 +830,7 @@ describe("PEG.js grammar parser", function() {
     expect('start = "abcd"|2.. , "efgh"|').toParseAs(oneRuleGrammar({
       type:       "range",
       min:        2,
-      max:        undefined,
+      max:        null,
       expression: literalAbcd,
       delimiter:  literalEfgh
     }));
@@ -835,7 +841,7 @@ describe("PEG.js grammar parser", function() {
       expression: literalAbcd,
       delimiter:  literalEfgh
     }));
-    expect('start = "abcd"' ).toParseAs(literalGrammar("abcd"));
+    expect('start = "abcd"' ).toParseAs(literalGrammar("abcd", false));
   });
 
 

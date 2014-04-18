@@ -393,10 +393,10 @@ describe("generated parser", function() {
     });
 
     describe("sequence matching", function() {
-      it("matches empty sequence correctly", function() {
-        var parser = PEG.buildParser('start = ', options);
-
-        expect(parser).toParse("", []);
+      it("does not accept an empty rule", function() {
+        expect(function () {
+          var parser = PEG.buildParser('start = ', options);
+        }).toThrow('Expected "!", "$", "&", "(", ".", character class, comment, end of line, identifier, literal or whitespace but end of input found.');
       });
 
       it("matches non-empty sequence correctly", function() {

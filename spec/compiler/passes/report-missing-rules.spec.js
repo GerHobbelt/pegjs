@@ -6,11 +6,20 @@ describe("compiler pass |reportMissingRules|", function() {
     }
     F.prototype = constructor.prototype;
     return new F();
-  };
+  }
   var collector = {
+    emitFatalError: function() {
+      throw construct(PEG.GrammarError, arguments);
+    },
     emitError: function() {
       throw construct(PEG.GrammarError, arguments);
     },
+    emitWarning: function() {
+      //throw construct(PEG.GrammarError, arguments);
+    },
+    emitInfo: function() {
+      //throw construct(PEG.GrammarError, arguments);
+    }
   };
 
   beforeEach(function() {

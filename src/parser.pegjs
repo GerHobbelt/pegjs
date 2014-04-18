@@ -125,6 +125,7 @@ Annotations
 Annotation
   = "@" __ name:Identifier __ params:Params? {
       return {
+        type: "annotation",
         name: name,
         region: region(),
         params: params === null ? [] : params

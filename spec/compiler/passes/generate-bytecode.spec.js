@@ -182,13 +182,19 @@ describe("compiler pass |generateBytecode|", function() {
     describe("empty", function() {
       var grammar = 'start = ';
 
-      it("generates correct bytecode", function() {
+      it("does fail the parse with an error", function() {
+        expect(function () {
+          var parser = PEG.buildParser(grammar, options);
+        }).toThrow('SyntaxError');
+      });
+
+      xit("generates correct bytecode", function() {
         expect(pass).toChangeAST(grammar, bytecodeDetails([
           0, 0   // PUSH
         ]));
       });
 
-      it("defines correct constants", function() {
+      xit("defines correct constants", function() {
         expect(pass).toChangeAST(grammar, constsDetails(['[]']));
       });
     });
