@@ -43,10 +43,10 @@ Runner = {
     var state = {};
 
     function initialize() {
-      callbacks.start();
-
       state.totalInputSize = 0;
       state.totalParseTime = 0;
+
+      callbacks.start(state);
     }
 
     function benchmarkInitializer(i) {
@@ -77,14 +77,18 @@ Runner = {
       };
     }
 
-    function testRunnerSingleRun(k) {
+    function testRunnerSingleRun(i, j, k) {
       return function() {
+        var benchmark = benchmarks[i];
+        var test = benchmark.tests[j];
+
         var t = (new Date()).getTime();
         state.parser.parse(state.testInput);
         var t_delta = (new Date()).getTime() - t;
         state.singleRunParseTime[k] = t_delta;
         state.testParseTime += t_delta;
         state.runCount++;
+        callbacks.testOneRound(benchmark, test, k, t_delta, state);
       };
     }
 
@@ -130,7 +134,7 @@ Runner = {
       for (var j = 0; j < benchmarks[i].tests.length; j++) {
         Q.add(testRunnerStart(i, j));
         for (var k = 0; k < runCount; k++) {
-          Q.add(testRunnerSingleRun());
+          Q.add(testRunnerSingleRun(i, j, k));
         }
         Q.add(testRunnerFinish(i, j));
       }

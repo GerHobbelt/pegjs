@@ -78,11 +78,15 @@ $("#run").click(function() {
       }).responseText;
     },
 
-    testStart: function(benchmark, test) {
+    testStart: function(benchmark, test, state) {
       /* Nothing to do. */
     },
 
-    testFinish: function(benchmark, test, inputSize, parseTime) {
+    testOneRound: function(benchmark, test, iterationIndex, parseTime, state) {
+      /* Nothing to do. */
+    },
+
+    testFinish: function(benchmark, test, inputSize, parseTime, state) {
       appendResult(
         "individual",
         test.title,
@@ -92,11 +96,11 @@ $("#run").click(function() {
       );
     },
 
-    benchmarkStart: function(benchmark) {
+    benchmarkStart: function(benchmark, state) {
       appendHeading(benchmark.title);
     },
 
-    benchmarkFinish: function(benchmark, inputSize, parseTime) {
+    benchmarkFinish: function(benchmark, inputSize, parseTime, state) {
       appendResult(
         "benchmark-total",
         benchmark.title + " total",
@@ -106,14 +110,14 @@ $("#run").click(function() {
       );
     },
 
-    start: function() {
+    start: function(state) {
       $("#run-count, #cache, #run").attr("disabled", "disabled");
 
       resultsTable.show();
       $("#results-table tr").slice(1).remove();
     },
 
-    finish: function(inputSize, parseTime) {
+    finish: function(inputSize, parseTime, state) {
       appendResult(
         "total",
         "Total",
