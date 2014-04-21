@@ -81,6 +81,7 @@ function printHelp() {
   util.puts("Options:");
   util.puts("  -n, --run-count <n>          number of runs (default: 10)");
   util.puts("      --cache                  make tested parsers cache results");
+  util.puts("      --includeRegionInfo      make tested parsers add region info to each AST node");
   util.puts("  -o, --optimize <goal>        select optimization for speed or size (default:");
   util.puts("                               speed)");
 }
@@ -134,6 +135,10 @@ while (args.length > 0 && isOption(args[0])) {
 
     case "--cache":
       options.cache = true;
+      break;
+
+    case "--includeRegionInfo":
+      options.includeRegionInfo = true;
       break;
 
     case "-o":

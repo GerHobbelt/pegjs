@@ -63,8 +63,9 @@ $("#run").click(function() {
   }
 
   var options = {
-    cache:    $("#cache").is(":checked"),
-    optimize: $("#optimize").val()
+    cache:              $("#cache").is(":checked"),
+    includeRegionInfo:  $("#region").is(":checked"),
+    optimize:           $("#optimize").val()
   };
 
   Runner.run(benchmarks, runCount, options, {

@@ -7,7 +7,7 @@ body {
 
 h1 { margin: 0 0 .75em 0; text-align: center; font-size: 200%; }
 
-table { width: 48em; margin: 0 auto; border-spacing: 0; border-collapse: collapse; }
+table { width: 58em; margin: 0 auto; border-spacing: 0; border-collapse: collapse; }
 table td, table th { border: 1px solid silver; padding: .25em 1em; }
 table td .unit { font-size: 75%; color: gray; }
 table td.no-results  { padding: 1em; text-align: center; }
@@ -24,7 +24,7 @@ table tr.total td.parse-speed .value { font-size: 175%; }
 a, a:visited { color: #3d586c; }
 
 #options {
-  width: 45em;
+  width: 55em;
   margin: 2em auto; border-radius: .5em; -moz-border-radius: .5em; padding: .5em 1.5em;
   background-color: #f0f0f0;
 }

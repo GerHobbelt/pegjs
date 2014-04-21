@@ -79,7 +79,7 @@ Grammar
   = __ initializer:(Initializer __)? rules:(Rule __)+ EOF {
       return {
         type:        "grammar",
-        region:      region(),
+        region:      options.includeRegionInfo ? region() : null,
         initializer: extractOptional(initializer, 0),
         rules:       extractList(rules, 0)
       };
@@ -89,7 +89,7 @@ Initializer
   = code:CodeBlock EOS {
       return {
         type:   "initializer",
-        region: region(),
+        region: options.includeRegionInfo ? region() : null,
         code:   code
       };
     }
@@ -102,13 +102,13 @@ Rule
     expression:Expression EOS {
       return {
         type:        "rule",
-        region:      region(),
+        region:      options.includeRegionInfo ? region() : null,
         name:        name,
         annotations: annotations,
         expression:  displayName !== null
           ? {
               type:       "named",
-              region:     region(),
+              region:     options.includeRegionInfo ? region() : null,
               name:       displayName[0],
               expression: expression
             }
@@ -127,7 +127,7 @@ Annotation
       return {
         type: "annotation",
         name: name,
-        region: region(),
+        region: options.includeRegionInfo ? region() : null,
         params: params === null ? [] : params
       };
     };
@@ -150,7 +150,7 @@ ChoiceExpression
       return rest.length > 0
         ? {
           type: "choice",
-          region: region(),
+          region: options.includeRegionInfo ? region() : null,
           alternatives: buildList(first, rest, 3)
         }
         : first;
@@ -161,7 +161,7 @@ ActionExpression
       return code !== null
         ? {
           type: "action",
-          region: region(),
+          region: options.includeRegionInfo ? region() : null,
           expression: expression,
           code: code[1]
         }
@@ -173,7 +173,7 @@ SequenceExpression
       return rest.length > 0
         ? {
           type: "sequence",
-          region: region(),
+          region: options.includeRegionInfo ? region() : null,
           elements: buildList(first, rest, 1)
         }
         : first;
@@ -183,7 +183,7 @@ LabeledExpression
   = label:Identifier __ ":" __ expression:PrefixedExpression {
       return {
         type: "labeled",
-        region: region(),
+        region: options.includeRegionInfo ? region() : null,
         label: label,
         expression: expression
       };
@@ -194,7 +194,7 @@ PrefixedExpression
   = operator:PrefixedOperator __ expression:SuffixedExpression {
       return {
         type: OPS_TO_PREFIXED_TYPES[operator],
-        region: region(),
+        region: options.includeRegionInfo ? region() : null,
         expression: expression
       };
     }
@@ -209,14 +209,14 @@ SuffixedExpression
   = expression:PrimaryExpression __ operator:SuffixedOperator {
       return {
         type: OPS_TO_SUFFIXED_TYPES[operator],
-        region: region(),
+        region: options.includeRegionInfo ? region() : null,
         expression: expression
       };
     }
   / expression:PrimaryExpression __ r:Range {
       return {
         type:       "range",
-        region:     region(),
+        region:     options.includeRegionInfo ? region() : null,
         min:        r.min,
         max:        r.max,
         expression: expression,
@@ -243,7 +243,7 @@ RuleReferenceExpression
   = name:IdentifierName !(__ (StringLiteral __)? "=") {
       return {
         type: "rule_ref",
-        region: region(),
+        region: options.includeRegionInfo ? region() : null,
         name: name
       };
     };
@@ -252,7 +252,7 @@ SemanticPredicateExpression
   = operator:SemanticPredicateOperator __ code:CodeBlock {
       return {
         type: OPS_TO_SEMANTIC_PREDICATE_TYPES[operator],
-        region: region(),
+        region: options.includeRegionInfo ? region() : null,
         code: code
       };
     };
@@ -422,7 +422,7 @@ LiteralMatcher "literal"
   = value:StringLiteral ignoreCase:"i"? {
       return {
         type: "literal",
-        region: region(),
+        region: options.includeRegionInfo ? region() : null,
         value: value,
         ignoreCase: ignoreCase !== null
       };
@@ -452,7 +452,7 @@ CharacterClassMatcher "character class"
     {
       return {
         type:       "class",
-        region:     region(),
+        region:     options.includeRegionInfo ? region() : null,
         parts:      filterEmptyStrings(parts),
         inverted:   inverted !== null,
         ignoreCase: ignoreCase !== null,
@@ -534,7 +534,7 @@ AnyMatcher
   = "." {
     return {
       type:   "any",
-      region: region()
+      region: options.includeRegionInfo ? region() : null
     };
   }
 
