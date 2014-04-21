@@ -18,7 +18,9 @@ Runner = {
            * We can't use |arguments.callee| here because |this| would get
            * messed-up in that case.
            */
-          setTimeout(function() { Q.run(); }, 0);
+          setTimeout(function() { 
+            Q.run(); 
+          }, 1 /* do not use 0 delay but give user/observer in browser a slice of time too */);
         }
       }
     };
@@ -49,56 +51,75 @@ Runner = {
 
     function benchmarkInitializer(i) {
       return function() {
-        callbacks.benchmarkStart(benchmarks[i]);
+        state.benchmarkInputSize = 0;
+        state.benchmarkParseTime = 0;
 
         state.parser = PEG.buildParser(
           callbacks.readFile("../examples/" + benchmarks[i].id + ".pegjs"),
           options
         );
-        state.benchmarkInputSize = 0;
-        state.benchmarkParseTime = 0;
+
+        callbacks.benchmarkStart(benchmarks[i], state);
       };
     }
 
-    function testRunner(i, j) {
+    function testRunnerStart(i, j) {
       return function() {
         var benchmark = benchmarks[i];
         var test = benchmark.tests[j];
 
-        callbacks.testStart(benchmark, test);
+        state.testInput = callbacks.readFile(benchmark.id + "/" + test.file);
+        state.singleRunParseTime = [];
+        state.testParseTime = 0;
+        state.runCount = 0;
 
-        var input = callbacks.readFile(benchmark.id + "/" + test.file);
+        callbacks.testStart(benchmark, test, state);
+      };
+    }
 
-        var parseTime = 0;
-        for (var k = 0; k < runCount; k++) {
-          var t = (new Date()).getTime();
-          state.parser.parse(input);
-          parseTime += (new Date()).getTime() - t;
-        }
-        var averageParseTime = parseTime / runCount;
+    function testRunnerSingleRun(k) {
+      return function() {
+        var t = (new Date()).getTime();
+        state.parser.parse(state.testInput);
+        var t_delta = (new Date()).getTime() - t;
+        state.singleRunParseTime[k] = t_delta;
+        state.testParseTime += t_delta;
+        state.runCount++;
+      };
+    }
 
-        callbacks.testFinish(benchmark, test, input.length, averageParseTime);
+    function testRunnerFinish(i, j) {
+      return function() {
+        var benchmark = benchmarks[i];
+        var test = benchmark.tests[j];
 
-        state.benchmarkInputSize += input.length;
+        var averageParseTime = state.testParseTime / state.runCount;
+
+        state.benchmarkInputSize += state.testInput.length;
         state.benchmarkParseTime += averageParseTime;
+
+        callbacks.testFinish(benchmark, test, state.testInput.length, averageParseTime, state);
       };
     }
 
     function benchmarkFinalizer(i) {
       return function() {
-        callbacks.benchmarkFinish(
-          benchmarks[i],
-          state.benchmarkInputSize,
-          state.benchmarkParseTime
-        );
+        state.parser = null;
 
         state.totalInputSize += state.benchmarkInputSize;
         state.totalParseTime += state.benchmarkParseTime;
+
+        callbacks.benchmarkFinish(
+          benchmarks[i],
+          state.benchmarkInputSize,
+          state.benchmarkParseTime,
+          state
+        );
       };
     }
 
     function finalize() {
-      callbacks.finish(state.totalInputSize, state.totalParseTime);
+      callbacks.finish(state.totalInputSize, state.totalParseTime, state);
     }
 
     /* Main */
@@ -107,7 +128,11 @@ Runner = {
     for (var i = 0; i < benchmarks.length; i++) {
       Q.add(benchmarkInitializer(i));
       for (var j = 0; j < benchmarks[i].tests.length; j++) {
-        Q.add(testRunner(i, j));
+        Q.add(testRunnerStart(i, j));
+        for (var k = 0; k < runCount; k++) {
+          Q.add(testRunnerSingleRun());
+        }
+        Q.add(testRunnerFinish(i, j));
       }
       Q.add(benchmarkFinalizer(i));
     }
