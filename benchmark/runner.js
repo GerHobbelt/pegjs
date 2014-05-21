@@ -4,26 +4,26 @@ Runner = {
     /* Queue */
 
     var Q = {
-      functions: [],
+          functions: [],
 
-      add: function(f) {
-        this.functions.push(f);
-      },
+          add: function(f) {
+            this.functions.push(f);
+          },
 
-      run: function() {
-        if (this.functions.length > 0) {
-          this.functions.shift()();
+          run: function() {
+            if (this.functions.length > 0) {
+              this.functions.shift()();
 
-          /*
-           * We can't use |arguments.callee| here because |this| would get
-           * messed-up in that case.
-           */
-          setTimeout(function() { 
-            Q.run(); 
-          }, 1 /* do not use 0 delay but give user/observer in browser a slice of time too */);
-        }
-      }
-    };
+              /*
+               * We can't use |arguments.callee| here because |this| would get
+               * messed-up in that case.
+               */
+              setTimeout(function() { 
+                Q.run(); 
+              }, 1 /* do not use 0 delay but give user/observer in browser a slice of time too */);
+            }
+          }
+        };
 
     /*
      * The benchmark itself is factored out into several functions (some of them
@@ -40,7 +40,7 @@ Runner = {
      * of the |state| object.
      */
 
-    var state = {};
+    var state = {}, i, j;
 
     function initialize() {
       state.totalInputSize = 0;
@@ -65,8 +65,9 @@ Runner = {
 
     function testRunnerStart(i, j) {
       return function() {
-        var benchmark = benchmarks[i];
-        var test = benchmark.tests[j];
+        var benchmark = benchmarks[i],
+            test      = benchmark.tests[j],
+            input, parseTime, averageParseTime, k, t;
 
         state.testInput = callbacks.readFile(benchmark.id + "/" + test.file);
         state.singleRunParseTime = [];
@@ -129,9 +130,9 @@ Runner = {
     /* Main */
 
     Q.add(initialize);
-    for (var i = 0; i < benchmarks.length; i++) {
+    for (i = 0; i < benchmarks.length; i++) {
       Q.add(benchmarkInitializer(i));
-      for (var j = 0; j < benchmarks[i].tests.length; j++) {
+      for (j = 0; j < benchmarks[i].tests.length; j++) {
         Q.add(testRunnerStart(i, j));
         for (var k = 0; k < runCount; k++) {
           Q.add(testRunnerSingleRun(i, j, k));

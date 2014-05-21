@@ -76,24 +76,8 @@ describe("generated parser", function() {
         var options = arguments.length > 2 ? arguments[1] : {},
             details = arguments.length > 1
                         ? arguments[arguments.length - 1]
-                        : undefined;
-
-        /*
-         * Extracted into a function just to silence JSHint complaining about
-         * creating functions in a loop.
-         */
-        function buildKeyMessage(key, value) {
-          return function() {
-            return "Expected " + jasmine.pp(input) + " "
-                 + "with options " + jasmine.pp(options) + " "
-                 + "to fail to parse"
-                 + (details ? " with details " + jasmine.pp(details) : "") + ", "
-                 + "but " + jasmine.pp(key) + " "
-                 + "is " + jasmine.pp(value) + ".";
-          };
-        }
-
-        var result;
+                        : undefined,
+            result;
 
         try {
           result = this.actual.parse(input, options);
@@ -127,7 +111,14 @@ describe("generated parser", function() {
               for (key in details) {
                 if (details.hasOwnProperty(key)) {
                   if (!this.env.equals_(e[key], details[key])) {
-                    this.message = buildKeyMessage(key, e[key]);
+                    this.message = function() {
+                      return "Expected " + jasmine.pp(input) + " "
+                           + "with options " + jasmine.pp(options) + " "
+                           + "to fail to parse"
+                           + (details ? " with details " + jasmine.pp(details) : "") + ", "
+                           + "but " + jasmine.pp(key) + " "
+                           + "is " + jasmine.pp(e[key]) + ".";
+                    };
 
                     return false;
                   }
@@ -342,13 +333,13 @@ describe("generated parser", function() {
         expect(parser).toParse("1\n2\n\n3\n\n\n4 5 x", [7, 5]);
 
         /* Non-Unix newlines */
-        expect(parser).toParse("1\rx",   [2, 1]); // Old Mac
-        expect(parser).toParse("1\r\nx", [2, 1]); // Windows
-        expect(parser).toParse("1\n\rx", [3, 1]); // mismatched
+        expect(parser).toParse("1\rx",   [2, 1]);   // Old Mac
+        expect(parser).toParse("1\r\nx", [2, 1]);   // Windows
+        expect(parser).toParse("1\n\rx", [3, 1]);   // mismatched
 
         /* Strange newlines */
-        expect(parser).toParse("1\u2028x", [2, 1]); // line separator
-        expect(parser).toParse("1\u2029x", [2, 1]); // paragraph separator
+        expect(parser).toParse("1\u2028x", [2, 1]);   // line separator
+        expect(parser).toParse("1\u2029x", [2, 1]);   // paragraph separator
       });
 
       it("can use variables defined in the initializer", function() {
@@ -553,13 +544,13 @@ describe("generated parser", function() {
         expect(parser).toParse("1\n2\n\n3\n\n\n4 5 x", [7, 5]);
 
         /* Non-Unix newlines */
-        expect(parser).toParse("1\rx",   [2, 1]); // Old Mac
-        expect(parser).toParse("1\r\nx", [2, 1]); // Windows
-        expect(parser).toParse("1\n\rx", [3, 1]); // mismatched
+        expect(parser).toParse("1\rx",   [2, 1]);   // Old Mac
+        expect(parser).toParse("1\r\nx", [2, 1]);   // Windows
+        expect(parser).toParse("1\n\rx", [3, 1]);   // mismatched
 
         /* Strange newlines */
-        expect(parser).toParse("1\u2028x", [2, 1]); // line separator
-        expect(parser).toParse("1\u2029x", [2, 1]); // paragraph separator
+        expect(parser).toParse("1\u2028x", [2, 1]);   // line separator
+        expect(parser).toParse("1\u2029x", [2, 1]);   // paragraph separator
       });
 
       it("can use variables defined in the initializer", function() {
@@ -653,13 +644,13 @@ describe("generated parser", function() {
         expect(parser).toParse("1\n2\n\n3\n\n\n4 5 x", [7, 5]);
 
         /* Non-Unix newlines */
-        expect(parser).toParse("1\rx",   [2, 1]); // Old Mac
-        expect(parser).toParse("1\r\nx", [2, 1]); // Windows
-        expect(parser).toParse("1\n\rx", [3, 1]); // mismatched
+        expect(parser).toParse("1\rx",   [2, 1]);   // Old Mac
+        expect(parser).toParse("1\r\nx", [2, 1]);   // Windows
+        expect(parser).toParse("1\n\rx", [3, 1]);   // mismatched
 
         /* Strange newlines */
-        expect(parser).toParse("1\u2028x", [2, 1]); // line separator
-        expect(parser).toParse("1\u2029x", [2, 1]); // paragraph separator
+        expect(parser).toParse("1\u2028x", [2, 1]);   // line separator
+        expect(parser).toParse("1\u2029x", [2, 1]);   // paragraph separator
       });
 
       it("can use variables defined in the initializer", function() {
@@ -1199,19 +1190,19 @@ describe("generated parser", function() {
          */
         var parser = PEG.buildParser([
               'Expr    = Sum',
-              'Sum     = head:Product tail:(("+" / "-") Product)* {',
-              '            var result = head, i;',
-              '            for (i = 0; i < tail.length; i++) {',
-              '              if (tail[i][0] == "+") { result += tail[i][1]; }',
-              '              if (tail[i][0] == "-") { result -= tail[i][1]; }',
+              'Sum     = first:Product rest:(("+" / "-") Product)* {',
+              '            var result = first, i;',
+              '            for (i = 0; i < rest.length; i++) {',
+              '              if (rest[i][0] == "+") { result += rest[i][1]; }',
+              '              if (rest[i][0] == "-") { result -= rest[i][1]; }',
               '            }',
               '            return result;',
               '          }',
-              'Product = head:Value tail:(("*" / "/") Value)* {',
-              '            var result = head, i;',
-              '            for (i = 0; i < tail.length; i++) {',
-              '              if (tail[i][0] == "*") { result *= tail[i][1]; }',
-              '              if (tail[i][0] == "/") { result /= tail[i][1]; }',
+              'Product = first:Value rest:(("*" / "/") Value)* {',
+              '            var result = first, i;',
+              '            for (i = 0; i < rest.length; i++) {',
+              '              if (rest[i][0] == "*") { result *= rest[i][1]; }',
+              '              if (rest[i][0] == "/") { result /= rest[i][1]; }',
               '            }',
               '            return result;',
               '          }',
