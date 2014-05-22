@@ -254,16 +254,22 @@ describe("generated parser", function() {
     });
 
     describe("named matching", function() {
-      var parser = PEG.buildParser('start "start" = "a"');
+      var parser = PEG.buildParser('start "start" = "a" start2; start2 "start2" = "a"');
 
       it("delegates to the expression", function() {
-        expect(parser).toParse("a", "a");
+        expect(parser).toParse("aa", ["a", "a"]);
         expect(parser).toFailToParse("b");
       });
 
       it("overwrites expected string on failure", function() {
         expect(parser).toFailToParse("b", {
           expected: [{ type: "other", description: "start" }]
+        });
+      });
+
+      it("overwrites expected string on failure of a subrule", function() {
+        expect(parser).toFailToParse("ab", {
+          expected: [{ type: "other", description: "start2" }]
         });
       });
     });

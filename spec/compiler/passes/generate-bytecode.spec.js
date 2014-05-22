@@ -56,11 +56,13 @@ describe("compiler pass |generateBytecode|", function() {
     var grammar = 'start "start" = "a"';
     it("generates correct bytecode", function() {
       expect(pass).toChangeAST(grammar, bytecodeDetails([
-        26,                          // SILENT_FAILS_ON
-        16, 1, 2, 2, 20, 1, 21, 2,   // <expression>
-        27,                          // SILENT_FAILS_OFF
+        32,                          // SILENT_FAILS_ON
+        14, 1, 2, 2, 18, 1, 19, 2,   // <expression>
+        33,                          // SILENT_FAILS_OFF
+        10, 1, 0,                    // IF_ERROR
+        34,                          // SILENT_FAILS_RESET
         10, 2, 0,                    // IF_ERROR
-        21, 0                        //   * FAIL
+        19, 0                        //   * FAIL
       ]));
     });
 
