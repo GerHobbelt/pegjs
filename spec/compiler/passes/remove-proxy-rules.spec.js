@@ -134,15 +134,34 @@ describe("compiler pass |removeProxyRules|", function() {
         defaultOptions,
         simpleDetails
       );
+      expect(pass).toChangeAST(
+        proxyGrammar('start = proxy|2..3, "a"|'),
+        defaultOptions,
+        simpleDetails
+      );
+      expect(pass).toChangeAST(
+        proxyGrammar('start = proxy|2|'),
+        defaultOptions,
+        simpleDetails
+      );
+      expect(pass).toChangeAST(
+        proxyGrammar('start = proxy|2, "a"|'),
+        defaultOptions,
+        simpleDetails
+      );
     });
+
     it("delimiter", function() {
+      var details = expressionDetails({ delimiter:  proxiedRefDetails });
       expect(pass).toChangeAST(
         proxyGrammar('start = "a"|2..3, proxy|'),
         defaultOptions,
-        expressionDetails({
-          expression: {},
-          delimiter: proxiedRefDetails,
-        })
+        details
+      );
+      expect(pass).toChangeAST(
+        proxyGrammar('start = "a"|2, proxy|'),
+        defaultOptions,
+        details
       );
     });
   });

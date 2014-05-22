@@ -213,22 +213,37 @@ SuffixedExpression
         expression: expression
       };
     }
-  / expression:PrimaryExpression __ r:Range {
-      return {
-        type:       "range",
-        region:     options.includeRegionInfo ? region() : null,
-        min:        r.min,
-        max:        r.max,
-        expression: expression,
-        delimiter:  r.delimiter
-      };
-    }
+  / RangeExpression
   / PrimaryExpression
 
 SuffixedOperator
   = "?"
   / "*"
   / "+"
+
+RangeExpression
+  = expression:PrimaryExpression __ operator:RangeOperator {
+      var min = operator[0];
+      var max = operator[1];
+      if (max === 0) {
+        error("The maximum count of repetitions of the rule cann't be 0.");
+      }
+      return {
+        type:       "range",
+        min:        min,
+        max:        max,
+        expression: expression,
+        delimiter:  operator[2]
+      };
+    }
+
+RangeOperator
+  = "|" __ exact:Int __ delimiter:("," __ PrimaryExpression __)? "|" {
+      return [exact, exact, delimiter !== null ? delimiter[2] : null];
+    }
+  / "|" __ min:Int? __ ".." __ max:Int? __ delimiter:("," __ PrimaryExpression __)? "|" {
+      return [min !== null ? min : 0, max, delimiter !== null ? delimiter[2] : null];
+    }
 
 @cache
 PrimaryExpression
@@ -552,6 +567,9 @@ CodeBlock "code block"
 
 Code
   = $((![{}] SourceCharacter)+ / "{" Code "}")*
+
+Int
+  = digits:$DecimalDigit+ { return parseInt(digits); }
 
 /*
  * Unicode Character Categories
