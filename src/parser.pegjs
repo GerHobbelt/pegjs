@@ -74,7 +74,7 @@
 }
 
 /* ---- Syntactic Grammar ----- */
-@nocache(all)
+//@nocache(all)
 Grammar
   = __ initializer:(Initializer __)? rules:(Rule __)+ EOF {
       return {
@@ -245,7 +245,7 @@ RangeOperator
       return [min !== null ? min : 0, max, delimiter !== null ? delimiter[2] : null];
     }
 
-@cache
+//@cache
 PrimaryExpression
   = LiteralMatcher
   / CharacterClassMatcher
@@ -306,7 +306,7 @@ Int = n:$DecimalDigit+ {
 SourceCharacter
   = .
 
-@cache
+//@cache
 WhiteSpace "whitespace"
   = "\t"
   / "\v"
@@ -319,7 +319,7 @@ WhiteSpace "whitespace"
 LineTerminator
   = [\n\r\u2028\u2029]
 
-@cache
+//@cache
 LineTerminatorSequence "end of line"
   = "\n"
   / "\r\n"
@@ -345,18 +345,18 @@ Identifier
       return name; 
     };
 
-@cache
+//@cache
 IdentifierName "identifier"
   = first:IdentifierStart rest:IdentifierPart* { return first + rest.join(""); }
 
-@cache
+//@cache
 IdentifierStart
   = UnicodeLetter
   / "$"
   / "_"
   / "\\" sequence:UnicodeEscapeSequence { return sequence; }
 
-@cache
+//@cache
 IdentifierPart
   = IdentifierStart
   / UnicodeCombiningMark
@@ -443,7 +443,7 @@ LiteralMatcher "literal"
       };
     };
 
-@cache
+//@cache
 StringLiteral "string"
   = '"' chars:DoubleStringCharacter* '"' { return chars.join(""); }
   / "'" chars:SingleStringCharacter* "'" { return chars.join(""); }
@@ -486,7 +486,7 @@ ClassCharacterRange
       return [begin, end];
     }
 
-@cache
+//@cache
 ClassCharacter
   = !("]" / "\\" / LineTerminator) SourceCharacter { return text(); }
   / "\\" sequence:EscapeSequence { return sequence; }
@@ -514,7 +514,7 @@ CharacterEscapeSequence
   = SingleEscapeCharacter
   / NonEscapeCharacter
 
-@cache
+//@cache
 SingleEscapeCharacter
   = "'"
   / '"'
@@ -670,7 +670,7 @@ WithToken       = "with"       !IdentifierPart
 
 /* Skipped */
 
-@cache
+//@cache
 __
   = (WhiteSpace / LineTerminatorSequence / Comment)*
 

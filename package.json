@@ -48,9 +48,9 @@
     "url":  "http://github.com/dmajda/pegjs.git"
   },
   "devDependencies": {
-    "jasmine-node": "= 1.11.0",
-    "uglify-js":    "= 2.4.7",
-    "jshint":       "= 2.3.0"
+    "jasmine-node": ">=1.14.3",
+    "uglify-js": ">=2.4.14",
+    "jshint": ">=2.5.1"
   },
   "engines":         {
     "node": ">= 0.8"
