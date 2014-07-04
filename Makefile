@@ -6,7 +6,7 @@ PEGJS_VERSION = `cat $(VERSION_FILE)`
 
 # Order matters -- dependencies must be listed before modules dependent on them.
 MODULES =                                           \
-		utils/arrays                                \
+		  utils/arrays                              \
 		  utils/objects                             \
 		  utils/classes                             \
 		  grammar-error                             \
@@ -22,6 +22,8 @@ MODULES =                                           \
 		  compiler/passes/report-missing-rules      \
 		  compiler/passes/report-unused-rules       \
 		  compiler/passes/report-redefined-rules    \
+		  compiler/passes/propagate-descriptions    \
+		  compiler/passes/patch-ast-graph           \
 		  compiler                                  \
 		  peg
 
@@ -61,7 +63,7 @@ all: browser
 
 # Generate the grammar parser
 parser:
-	$(PEGJS) --elapsed-time --cache --statistics $(PARSER_SRC_FILE) $(PARSER_OUT_FILE)
+	$(PEGJS) --verbose --elapsed-time --cache --statistics $(PARSER_SRC_FILE) $(PARSER_OUT_FILE)
 
 # Build the browser version of the library
 browser: parser
@@ -77,7 +79,7 @@ browser: parser
 	echo ' *'                                                                          >> $(BROWSER_FILE_DEV)
 	echo ' * http://pegjs.majda.cz/'                                                   >> $(BROWSER_FILE_DEV)
 	echo ' *'                                                                          >> $(BROWSER_FILE_DEV)
-	echo ' * Copyright (c) 2010-2013 David Majda'                                      >> $(BROWSER_FILE_DEV)
+	echo ' * Copyright (c) 2010-2014 David Majda'                                      >> $(BROWSER_FILE_DEV)
 	echo ' * Licensed under the MIT license.'                                          >> $(BROWSER_FILE_DEV)
 	echo ' */'                                                                         >> $(BROWSER_FILE_DEV)
 	echo 'var PEG = (function(undefined) {'                                            >> $(BROWSER_FILE_DEV)

@@ -5,6 +5,8 @@ var fs   = require("fs");
 var path = require("path");
 var PEG  = require("../lib/peg");
 
+var options;
+
 /* Helpers */
 
 function printVersion() {
@@ -54,8 +56,11 @@ function exitFailure() {
   process.exit(1);
 }
 
-function abort(message) {
+function abort(message, ex) {
   util.error(message);
+  if (options.verboseOutput && ex && ex.stack) {
+    console.log("Stacktrace:\n", ex.stack);
+  }
   exitFailure();
 }
 
@@ -67,7 +72,7 @@ function addExtraOptions(options, json) {
   } catch (e) {
     if (!(e instanceof SyntaxError)) { throw e; }
 
-    abort("Error parsing JSON: " + e.message);
+    abort("Error parsing JSON: " + e.message, e);
   }
   if (typeof extraOptions !== "object") {
     abort("The JSON with extra options has to represent an object.");
@@ -104,8 +109,9 @@ function nextArg() {
 /* Main */
 
 /* This makes the generated parser a CommonJS module by default. */
-var options = {
+options = {
   cache:    false,
+  verboseOutput: false,
   output:   "source",
   optimize: "speed",
   plugins:  []
@@ -118,7 +124,7 @@ while (args.length > 0 && isOption(args[0])) {
       if (args.length < 3 || args.length > 3) {
         abort("Argument should be 2, input and output file.");
       }
-      console.log('watching file...' + args[1])
+      console.log('watching file...' + args[1]);
       watchFile(args[1], args[2]);
       break;
 
@@ -176,7 +182,7 @@ while (args.length > 0 && isOption(args[0])) {
       } catch (e) {
         if (e.code !== "MODULE_NOT_FOUND") { throw e; }
 
-        abort("Can't load module \"" + id + "\".");
+        abort("Can't load module \"" + id + "\".", e);
       }
       options.plugins.push(mod);
       break;
@@ -204,6 +210,10 @@ while (args.length > 0 && isOption(args[0])) {
 
     case "--elapsed-time":
       options.reportElapsedTime = true;
+      break;
+
+    case "--verbose":
+      options.verboseOutput = true;
       break;
 
     case "-v":
@@ -283,9 +293,9 @@ function stream(inputStream, outputStream) {
       source = PEG.buildParser(input, options);
     } catch (e) {
       if (e.line !== undefined && e.column !== undefined) {
-        abort(e.line + ":" + e.column + ": " + e.message);
+        abort(e.line + ":" + e.column + ": " + e.message, e);
       } else {
-        abort(e.message);
+        abort(e.message, e);
       }
     }
 
@@ -327,8 +337,8 @@ function watchFile(input, output) {
     console.log(input + 'has been modified, rebuild pegjs ' + output);
     rwFile(input, output, function(inputStream, outputStream) {
       stream(inputStream, outputStream);
-    })
-  })
+    });
+  });
 }
 
 
