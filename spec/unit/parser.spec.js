@@ -195,7 +195,8 @@ describe("PEG.js grammar parser", function() {
           rule_ref:     rm,
           literal:      rm,
           "class":      rm,
-          any:          rm
+          any:          rm,
+          epsilon:      rm
         });
 
         try {

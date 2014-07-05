@@ -72,6 +72,21 @@
   function buildList(first, rest, index) {
     return [first].concat(extractList(rest, index));
   }
+
+  function mergeArrays(array1 /* , ... */ ) {
+    array1 = array1 || [];
+    var length, array2, i, j, argscount;
+
+    for (j = 1, argscount = arguments.length; j < argscount; j++) {
+      array2 = arguments[j] || [];
+      length = array2.length;
+
+      for (i = 0; i < length; i++) {
+        array1.push(array2[i]);
+      }
+    }
+    return array1;
+  }
 }
 
 /* ---- Syntactic Grammar ----- */
@@ -80,7 +95,7 @@ Grammar
   = __ initializer:(Initializer __)? rules:(Rule __)+ EOF {
       return {
         type:        "grammar",
-        region:      options.includeRegionInfo ? region() : null,
+        region:      !options.includeRegionInfo || region(),
         initializer: extractOptional(initializer, 0),
         rules:       extractList(rules, 0)
       };
@@ -90,27 +105,28 @@ Initializer
   = code:CodeBlock EOS {
       return {
         type:   "initializer",
-        region: options.includeRegionInfo ? region() : null,
+        region: !options.includeRegionInfo || region(),
         code:   code
       };
     }
 
 Rule
-  = annotations:Annotations
-    name:IdentifierName __
-    displayName:(StringLiteral __)?
+  = a1:Annotations                                   // we accept annotations BEFORE ...
+    name:Identifier __
+    a2:Annotations                                   // ... and AFTER the rule identifier.
+    displayName:(StringLiteral __ a3:Annotations)?
     "=" __
     expression:Expression EOS {
       return {
         type:        "rule",
-        region:      options.includeRegionInfo ? region() : null,
+        region:      !options.includeRegionInfo || region(),
         name:        name,
         rawText:     text(),
-        annotations: annotations,
+        annotations: mergeArrays(a1, a2, extractOptional(displayName, 2)),
         expression:  displayName !== null
           ? {
               type:       "named",
-              region:     options.includeRegionInfo ? region() : null,
+              region:     !options.includeRegionInfo || region(),
               name:       displayName[0],
               expression: expression
             }
@@ -122,16 +138,14 @@ Expression
   = ChoiceExpression
 
 Annotations
-  = annotations:( Annotation )* {
-      return annotations || [];
-    }
+  = ( Annotation )*
 
 Annotation
-  = "@" __ name:Identifier __ params:Params? {
+  = "@" __ name:AnnotationKeyword __ params:Params? {
       return {
         type: "annotation",
         name: name,
-        region: options.includeRegionInfo ? region() : null,
+        region: !options.includeRegionInfo || region(),
         params: params === null ? [] : params
       };
     };
@@ -142,37 +156,103 @@ Params
     };
 
 Param 
-  = i:Identifier __ {
-      return i;
+  = k:ParamKeyword __ {
+      return {
+        type: "param_keyword",
+        value: k
+      };
     }
   / str:StringLiteral __ {
-      return str;
-    };
+      return {
+        type: "param_string",
+        value: str
+      };
+    }
+  / n:Int __ {
+      return {
+        type: "param_number",
+        value: n
+      };
+    }
+  / r:Range2 __ {
+      return {
+        type: "param_range",
+        value: r
+      };
+    }
+  / annotation:Annotation {
+      return {
+        type: "annotation",
+        value: annotation
+      };
+    }
+
+AnnotationKeyword
+  = AssociativityToken
+  / AssocToken
+  / CatchToken
+  / CutToken
+  / DebugToken
+  / DescriptionToken
+  / EpsnToken
+  / ErrorToken
+  / FailToken
+  / FinallyToken
+  / ImportToken
+  / LeftToken
+  / MacroToken
+  / MessageToken
+  / NoAssocToken
+  / NoFailToken
+  / PrecedenceToken
+  / PrecToken
+  / ReturnToken
+  / RightToken
+  / ThrowToken
+  / TryToken
+  / VoidToken
+  / IdentifierName
+
+ParamKeyword
+  = AssocToken
+  / EpsilonToken
+  / EpsnToken
+  / ErrorToken
+  / FailToken
+  / FalseToken
+  / TrueToken
+  / GreekEpsilonToken
+  / LeftToken
+  / NoAssocToken
+  / NoFailToken
+  / NullToken
+  / RightToken
+  / VoidToken
+  / IdentifierName
 
 ChoiceExpression
   = first:ActionExpression rest:(__ "/" __ ActionExpression)* {
       return rest.length > 0
         ? {
           type: "choice",
-          region: options.includeRegionInfo ? region() : null,
-          annotations: [],
+          region: !options.includeRegionInfo || region(),
           alternatives: buildList(first, rest, 3)
         }
         : first;
     };
 
 ActionExpression
-  = expression:SequenceExpression annotations4action:Annotations code:(__ CodeBlock)? {
+  = expression:SequenceExpression annotations:Annotations code:(__ CodeBlock)? {
       if (code !== null) {
         return {
           type: "action",
-          region: options.includeRegionInfo ? region() : null,
-          annotations: annotations4action,
+          region: !options.includeRegionInfo || region(),
+          annotations: annotations,
           expression: expression,
           code: code[1]
         };
       } else {
-        expression.annotations = expression.annotations.concat(annotations4action);
+        expression.annotations = mergeArrays(expression.annotations, annotations);
         return expression;
       }
     };
@@ -182,8 +262,7 @@ SequenceExpression
       return rest.length > 0
         ? {
           type: "sequence",
-          region: options.includeRegionInfo ? region() : null,
-          annotations: [],
+          region: !options.includeRegionInfo || region(),
           elements: buildList(first, rest, 1)
         }
         : first;
@@ -193,7 +272,7 @@ LabeledExpression
   = annotations:Annotations label:( Identifier __ ":" __ )? expression:PrefixedExpression {
       return {
         type: "labeled",
-        region: options.includeRegionInfo ? region() : null,
+        region: !options.includeRegionInfo || region(),
         label: extractOptional(label, 0),
         annotations: annotations,
         expression: expression
@@ -204,8 +283,7 @@ PrefixedExpression
   = operator:PrefixedOperator __ expression:SuffixedExpression {
       return {
         type: OPS_TO_PREFIXED_TYPES[operator],
-        region: options.includeRegionInfo ? region() : null,
-        annotations: [],
+        region: !options.includeRegionInfo || region(),
         expression: expression
       };
     }
@@ -220,8 +298,7 @@ SuffixedExpression
   = expression:PrimaryExpression __ operator:SuffixedOperator {
       return {
         type: OPS_TO_SUFFIXED_TYPES[operator],
-        region: options.includeRegionInfo ? region() : null,
-        annotations: [],
+        region: !options.includeRegionInfo || region(),
         expression: expression
       };
     }
@@ -235,9 +312,6 @@ SuffixedOperator
 
 RangeExpression
   = expression:PrimaryExpression __ range:Range {
-      if (range.max === 0) {
-        error("The maximum count of repetitions of the rule can't be 0.");
-      }
       return {
         type:       "range",
         min:        range.min,
@@ -253,6 +327,7 @@ PrimaryExpression
   / LiteralMatcher
   / CharacterClassMatcher
   / AnyMatcher
+  / EpsilonMatcher
   / RuleReferenceExpression
   / SemanticPredicateExpression
   / CustomCodeExpression
@@ -262,17 +337,17 @@ PrimaryExpression
     %} {
       return {
         type: "literal",
-        region: options.includeRegionInfo ? region() : null,
+        region: !options.includeRegionInfo || region(),
         value: "fake",
         ignoreCase: false
       };
     }
 
 RuleReferenceExpression
-  = name:IdentifierName !(__ annotations:Annotations displayName:(StringLiteral __)? "=") {
+  = name:Identifier !(__ Annotations displayName:(StringLiteral __ Annotations)? "=") {
       return {
         type: "rule_ref",
-        region: options.includeRegionInfo ? region() : null,
+        region: !options.includeRegionInfo || region(),
         name: name
       };
     };
@@ -281,7 +356,7 @@ SemanticPredicateExpression
   = operator:SemanticPredicateOperator __ code:CodeBlock {
       return {
         type: OPS_TO_SEMANTIC_PREDICATE_TYPES[operator],
-        region: options.includeRegionInfo ? region() : null,
+        region: !options.includeRegionInfo || region(),
         code: code
       };
     };
@@ -291,19 +366,31 @@ SemanticPredicateOperator
   / "!"
 
 Range
-  = "|" __ r:Range2 __ delimiter:("," __ PrimaryExpression __)? "|" {
-      r.delimiter = extractOptional(delimiter, 2);
+  = "|" __ r:Range2 __ delimiter:("," __ annotations:Annotations PrimaryExpression __)? "|" {
+      r.delimiter = extractOptional(delimiter, 3);
+      if (r.delimiter) {
+        r.delimiter.annotations = mergeArrays(r.delimiter.annotations, annotations);
+      }
       return r;
     };
 
 Range2
   = min:Int? __ ".." __ max:Int? {
+      if (max === 0) {
+        error("The maximum count of repetitions can't be 0.");
+      }
+      if (min !== null && max !== null && min > max) {
+        error("The maximum count (" + max + ") of repetitions can't be smaller than the minimum count (" + min + ") of repetitions.");
+      }
       return {
         min: min !== null ? min : 0,
         max: max
       };
     }
   / val:Int {
+      if (val === 0) {
+        error("The count of repetitions can't be 0.");
+      }
       return {
         min: val,
         max: val
@@ -342,21 +429,21 @@ Comment "comment"
   = MultiLineComment
   / SingleLineComment
 
-MultiLineComment
+MultiLineComment "multiline comment"
   = "/*" (!"*/" SourceCharacter)* "*/"
 
 MultiLineCommentNoLineTerminator
   = "/*" (!("*/" / LineTerminator) SourceCharacter)* "*/"
 
-SingleLineComment
+SingleLineComment "single line comment"
   = "//" (!LineTerminator SourceCharacter)* LineTerminatorSequence
 
-Identifier
+@cache
+Identifier "identifier"
   = !ReservedWord name:IdentifierName { 
       return name; 
     };
 
-@cache
 IdentifierName "identifier"
   = first:IdentifierStart rest:IdentifierPart* { return first + rest.join(""); }
 
@@ -394,61 +481,16 @@ UnicodeDigit
 UnicodeConnectorPunctuation
   = Pc
 
+@cache
 ReservedWord
-  = Keyword
-  / FutureReservedWord
-  / NullLiteral
-  / BooleanLiteral
-
-Keyword
-  = BreakToken
-  / CaseToken
-  / CatchToken
-  / ContinueToken
-  / DebuggerToken
-  / DefaultToken
-  / DeleteToken
-  / DoToken
-  / ElseToken
-  / FinallyToken
-  / ForToken
-  / FunctionToken
-  / IfToken
-  / InstanceofToken
-  / InToken
-  / NewToken
-  / ReturnToken
-  / SwitchToken
-  / ThisToken
-  / ThrowToken
-  / TryToken
-  / TypeofToken
-  / VarToken
-  / VoidToken
-  / WhileToken
-  / WithToken
-
-FutureReservedWord
-  = ClassToken
-  / ConstToken
-  / EnumToken
-  / ExportToken
-  / ExtendsToken
-  / ImportToken
-  / SuperToken
-
-NullLiteral
-  = NullToken
-
-BooleanLiteral
-  = TrueToken
-  / FalseToken
+  = EpsilonToken
+  / GreekEpsilonToken
 
 LiteralMatcher "literal"
   = value:StringLiteral ignoreCase:"i"? {
       return {
         type: "literal",
-        region: options.includeRegionInfo ? region() : null,
+        region: !options.includeRegionInfo || region(),
         value: value,
         ignoreCase: ignoreCase !== null
       };
@@ -469,6 +511,18 @@ SingleStringCharacter
   / "\\" sequence:EscapeSequence { return sequence; }
   / LineContinuation
 
+EpsilonMatcher "epsilon"
+  = EpsilonKeywords __ {
+      return {
+        type: "epsilon",
+        region: !options.includeRegionInfo || region()
+      };
+    }
+
+EpsilonKeywords
+  = EpsilonToken
+  / GreekEpsilonToken
+
 CharacterClassMatcher "character class"
   = "["
     inverted:"^"?
@@ -478,7 +532,7 @@ CharacterClassMatcher "character class"
     {
       return {
         type:       "class",
-        region:     options.includeRegionInfo ? region() : null,
+        region:     !options.includeRegionInfo || region(),
         parts:      filterEmptyStrings(parts),
         inverted:   inverted !== null,
         ignoreCase: ignoreCase !== null,
@@ -569,7 +623,7 @@ RegexMatcher "regular expression"
   = value:RegexLiteral flags:RegexFlags* {
       return {
         type: "regex",
-        region: options.includeRegionInfo ? region() : null,
+        region: !options.includeRegionInfo || region(),
         value: value,
         ignoreCase: flags.indexOf("i") !== -1,
         multiLine: flags.indexOf("m") !== -1,
@@ -594,15 +648,15 @@ AnyMatcher
   = "." {
     return {
       type:   "any",
-      region: options.includeRegionInfo ? region() : null
+      region: !options.includeRegionInfo || region()
     };
   }
 
 CustomCodeExpression "custom parsing code block"
-  = "%{" code:CustomCode "%}" { 
+  = "%{" code:CustomParseCode "%}" { 
       return {
         type: "code",
-        region: options.includeRegionInfo ? region() : null,
+        region: !options.includeRegionInfo || region(),
         code: code
       };
     }
@@ -613,10 +667,10 @@ CodeBlock "code block"
 Code
   = $((![{}] SourceCharacter)+ / "{" Code "}")*
 
-CustomCode
+CustomParseCode
   = $(
       (![%{}] SourceCharacter)+ 
-    / "{" CustomCode "}"
+    / "{" CustomParseCode "}"
     / !"%}" SourceCharacter 
     )*
 
@@ -684,42 +738,34 @@ Zs "Separator, Space" = [\u0020\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]
 
 /* Tokens */
 
-BreakToken      = "break"      !IdentifierPart
-CaseToken       = "case"       !IdentifierPart
-CatchToken      = "catch"      !IdentifierPart
-ClassToken      = "class"      !IdentifierPart
-ConstToken      = "const"      !IdentifierPart
-ContinueToken   = "continue"   !IdentifierPart
-DebuggerToken   = "debugger"   !IdentifierPart
-DefaultToken    = "default"    !IdentifierPart
-DeleteToken     = "delete"     !IdentifierPart
-DoToken         = "do"         !IdentifierPart
-ElseToken       = "else"       !IdentifierPart
-EnumToken       = "enum"       !IdentifierPart
-ExportToken     = "export"     !IdentifierPart
-ExtendsToken    = "extends"    !IdentifierPart
-FalseToken      = "false"      !IdentifierPart
-FinallyToken    = "finally"    !IdentifierPart
-ForToken        = "for"        !IdentifierPart
-FunctionToken   = "function"   !IdentifierPart
-IfToken         = "if"         !IdentifierPart
-ImportToken     = "import"     !IdentifierPart
-InstanceofToken = "instanceof" !IdentifierPart
-InToken         = "in"         !IdentifierPart
-NewToken        = "new"        !IdentifierPart
-NullToken       = "null"       !IdentifierPart
-ReturnToken     = "return"     !IdentifierPart
-SuperToken      = "super"      !IdentifierPart
-SwitchToken     = "switch"     !IdentifierPart
-ThisToken       = "this"       !IdentifierPart
-ThrowToken      = "throw"      !IdentifierPart
-TrueToken       = "true"       !IdentifierPart
-TryToken        = "try"        !IdentifierPart
-TypeofToken     = "typeof"     !IdentifierPart
-VarToken        = "var"        !IdentifierPart
-VoidToken       = "void"       !IdentifierPart
-WhileToken      = "while"      !IdentifierPart
-WithToken       = "with"       !IdentifierPart
+AssociativityToken = "associativity" !IdentifierPart
+AssocToken         = "assoc"         !IdentifierPart
+CatchToken         = "catch"         !IdentifierPart
+CutToken           = "cut"           !IdentifierPart
+DebugToken         = "debug"         !IdentifierPart
+DescriptionToken   = "description"   !IdentifierPart
+EpsilonToken       = "epsilon"       !IdentifierPart
+EpsnToken          = "epsn"          !IdentifierPart
+ErrorToken         = "error"         !IdentifierPart
+FailToken          = "fail"          !IdentifierPart
+FalseToken         = "false"         !IdentifierPart
+TrueToken          = "true"          !IdentifierPart
+FinallyToken       = "finally"       !IdentifierPart
+GreekEpsilonToken  = "\u03B5"        !IdentifierPart
+ImportToken        = "import"        !IdentifierPart
+LeftToken          = "left"          !IdentifierPart
+MacroToken         = "macro"         !IdentifierPart
+MessageToken       = "message"       !IdentifierPart
+NoAssocToken       = "noassoc"       !IdentifierPart
+NoFailToken        = "nofail"        !IdentifierPart
+NullToken          = "null"          !IdentifierPart
+PrecedenceToken    = "precedence"    !IdentifierPart
+PrecToken          = "prec"          !IdentifierPart
+ReturnToken        = "return"        !IdentifierPart
+RightToken         = "right"         !IdentifierPart
+ThrowToken         = "throw"         !IdentifierPart
+TryToken           = "try"           !IdentifierPart
+VoidToken          = "void"          !IdentifierPart
 
 /* Skipped */
 
@@ -732,10 +778,12 @@ _
 
 /* Automatic Semicolon Insertion */
 
-EOS
-  = __ ";"
-  / _ SingleLineComment?
-  / __ EOF
+EOS "end-of-statement"
+  = __ ";"                        // terminated by semicolon
+  / _ ( SingleLineComment
+      / LineTerminatorSequence 
+      )                           // terminated by newline (optionally preceded by a single-line comment)
+  / __ EOF                        // terminated by end-of-file
 
 EOF
   = !.
