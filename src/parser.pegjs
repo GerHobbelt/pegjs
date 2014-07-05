@@ -257,6 +257,16 @@ PrimaryExpression
   / SemanticPredicateExpression
   / CustomCodeExpression
   / "(" __ expression:Expression __ ")" { return expression; }
+  / %{
+       return peg$FAILED; 
+    %} {
+      return {
+        type: "literal",
+        region: options.includeRegionInfo ? region() : null,
+        value: "fake",
+        ignoreCase: false
+      };
+    }
 
 RuleReferenceExpression
   = name:IdentifierName !(__ annotations:Annotations displayName:(StringLiteral __)? "=") {
@@ -588,8 +598,8 @@ AnyMatcher
     };
   }
 
-CustomCodeExpression
-  = "%{" code:Code "%}" { 
+CustomCodeExpression "custom parsing code block"
+  = "%{" code:CustomCode "%}" { 
       return {
         type: "code",
         region: options.includeRegionInfo ? region() : null,
@@ -602,6 +612,13 @@ CodeBlock "code block"
 
 Code
   = $((![{}] SourceCharacter)+ / "{" Code "}")*
+
+CustomCode
+  = $(
+      (![%{}] SourceCharacter)+ 
+    / "{" CustomCode "}"
+    / !"%}" SourceCharacter 
+    )*
 
 Int
   = digits:$DecimalNumber { return parseInt(digits, 10); }
