@@ -24,6 +24,7 @@ MODULES =                                           \
 		  compiler/passes/report-redefined-rules    \
 		  compiler/passes/propagate-descriptions    \
 		  compiler/passes/patch-ast-graph           \
+		  compiler/passes/print-ruleset             \
 		  compiler                                  \
 		  peg
 
@@ -132,11 +133,23 @@ spec: parser
 	$(JASMINE_NODE) --verbose $(SPEC_DIR)
 
 # Run the benchmark suite
+all-benchmarks:								\
+			benchmark 						\
+			benchmark-cache 				\
+			benchmark-locinfo 				\
+			benchmark-cache-locinfo 
+
 benchmark: parser
 	$(BENCHMARK_RUN)
 
 benchmark-cache: parser
 	$(BENCHMARK_RUN) --cache
+
+benchmark-locinfo: parser
+	$(BENCHMARK_RUN) --includeRegionInfo
+
+benchmark-cache-locinfo: parser
+	$(BENCHMARK_RUN) --cache --includeRegionInfo
 
 # Run JSHint on the source
 hint: parser

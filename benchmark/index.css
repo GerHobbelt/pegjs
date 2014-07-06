@@ -33,3 +33,11 @@ a, a:visited { color: #3d586c; }
 #options #run { float: right; width: 5em; }
 table.options-list { }
 td.run-button-cell { border-right: 0 none transparent; border-bottom: 0 none transparent; }
+
+tr.failure pre {
+  white-space: -moz-pre-wrap; 
+  white-space: -pre-wrap; 
+  white-space: -o-pre-wrap; 
+  word-wrap: keep-all; 
+  white-space: pre-wrap;  
+}    

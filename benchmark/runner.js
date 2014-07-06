@@ -30,7 +30,7 @@ Runner = {
      * generated), which are enqueued and run one by one using |setTimeout|. We
      * do this for two reasons:
      *
-     *   1. To avoid bowser mechanism for interrupting long-running scripts to
+     *   1. To avoid browser mechanism for interrupting long-running scripts to
      *      kick-in (or at least to not kick-in that often).
      *
      *   2. To ensure progressive rendering of results in the browser (some
@@ -45,6 +45,7 @@ Runner = {
     function initialize() {
       state.totalInputSize = 0;
       state.totalParseTime = 0;
+      state.totalTestFailCount = 0;
 
       callbacks.start(state);
     }
@@ -73,6 +74,7 @@ Runner = {
         state.singleRunParseTime = [];
         state.testParseTime = 0;
         state.runCount = 0;
+        state.testFailCollection = [];
 
         callbacks.testStart(benchmark, test, state);
       };
@@ -82,9 +84,20 @@ Runner = {
       return function() {
         var benchmark = benchmarks[i];
         var test = benchmark.tests[j];
+        var exMsg = false;
 
         var t = (new Date()).getTime();
-        state.parser.parse(state.testInput);
+        try {
+          state.parser.parse(state.testInput);
+        } catch (ex) {
+          exMsg = ex;
+          state.testFailCollection.push({
+            benchmark: i,
+            test: j,
+            round: k,
+            failure: exMsg
+          });
+        }
         var t_delta = (new Date()).getTime() - t;
         state.singleRunParseTime[k] = t_delta;
         state.testParseTime += t_delta;
@@ -113,6 +126,10 @@ Runner = {
 
         state.totalInputSize += state.benchmarkInputSize;
         state.totalParseTime += state.benchmarkParseTime;
+
+        if (state.testFailCollection.length > 0) {
+          state.totalTestFailCount++;
+        }
 
         callbacks.benchmarkFinish(
           benchmarks[i],

@@ -10,6 +10,12 @@ $("#run").click(function() {
     );
   }
 
+  function appendFailureMessage(report) {
+    resultsTable.append(
+      "<tr class='failure'><td colspan='4'><pre>" + report + "</pre></td></tr>"
+    );
+  }
+
   function appendResult(klass, title, url, inputSize, parseTime) {
     var KB      = 1024,
         MS_IN_S = 1000;
@@ -87,9 +93,31 @@ $("#run").click(function() {
     },
 
     testFinish: function(benchmark, test, inputSize, parseTime, state) {
+      var title = test.title;
+
+      if (state.testFailCollection.length > 0) {
+        // grab the first failure and report it:
+        var firstFailure = state.testFailCollection[0];
+
+        title += " !FAILED!";
+
+        var ex = firstFailure.failure;
+        var errMsg = ex.message;
+        var locInfo = "";
+        if (ex.line || ex.column || ex.offset) {
+          locInfo = " (line: " + ex.line + ", column: " + ex.column + " ~ offset: " + ex.offset + ")";
+        }
+        var errPreMsg = "";
+        if (ex.name) {
+          errPreMsg = ex.name + ": ";
+        }
+        var msg = errPreMsg + errMsg + locInfo;
+        appendFailureMessage(msg.trim());
+      }
+
       appendResult(
         "individual",
-        test.title,
+        title,
         benchmark.id + "/" + test.file,
         inputSize,
         parseTime

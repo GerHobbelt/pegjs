@@ -41,7 +41,20 @@ function writeTableHeader() {
   util.puts("│                Test                 │ Inp. size │ Avg. time  │  Avg. speed  │");
 }
 
-function writeHeading(heading) {
+function writeHeading(heading, options) {
+  var extra = [""];
+  if (options.optimize) {
+    extra.push("O:" + options.optimize.toUpperCase());
+  }
+  if (options.cache) {
+    extra.push("CACHE");
+  }
+  if (options.includeRegionInfo) {
+    extra.push("REGIONINFO");
+  }
+  extra = extra.join(" +");
+  heading += extra;
+
   util.puts("├─────────────────────────────────────┴───────────┴────────────┴──────────────┤");
   util.puts("│ " + center(heading, 75) + " │");
   util.puts("├─────────────────────────────────────┬───────────┬────────────┬──────────────┤");
@@ -174,28 +187,53 @@ Runner.run(benchmarks, runCount, options, {
     return fs.readFileSync(__dirname + "/" + file, "utf8");
   },
 
-  testStart: function(benchmark, test) {
+  testStart: function(benchmark, test, state) {
     /* Nothing to do. */
   },
 
-  testFinish: function(benchmark, test, inputSize, parseTime) {
-    writeResult(test.title, inputSize, parseTime);
+  testOneRound: function(benchmark, test, iterationIndex, parseTime, state) {
+    /* Nothing to do. */
   },
 
-  benchmarkStart: function(benchmark) {
-    writeHeading(benchmark.title);
+  testFinish: function(benchmark, test, inputSize, parseTime, state) {
+    var title = test.title;
+
+    if (state.testFailCollection.length > 0) {
+      // grab the first failure and report it:
+      var firstFailure = state.testFailCollection[0];
+
+      title += " !FAILED!";
+
+      var ex = firstFailure.failure;
+      var errMsg = ex.message;
+      var locInfo = "";
+      if (ex.line || ex.column || ex.offset) {
+        locInfo = " (line: " + ex.line + ", column: " + ex.column + " ~ offset: " + ex.offset + ")";
+      }
+      var errPreMsg = "";
+      if (ex.name) {
+        errPreMsg = ex.name + ": ";
+      }
+      var msg = errPreMsg + errMsg + locInfo;
+      util.puts(msg.trim() + "\n");
+    }
+    writeResult(title, inputSize, parseTime);
   },
 
-  benchmarkFinish: function(benchmark, inputSize, parseTime) {
+  benchmarkStart: function(benchmark, state) {
+    writeHeading(benchmark.title, options);
+  },
+
+  benchmarkFinish: function(benchmark, inputSize, parseTime, state) {
     writeSeparator();
     writeResult(benchmark.title + " total", inputSize, parseTime);
   },
 
-  start: function() {
+  start: function(state) {
     writeTableHeader();
   },
 
-  finish: function(inputSize, parseTime) {
+  finish: function(inputSize, parseTime, state) {
     writeSeparator();
     writeResult("Total", inputSize, parseTime);
     writeTableFooter();
