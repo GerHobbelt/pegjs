@@ -43,6 +43,7 @@ function printHelp() {
   util.puts("                                     format) to pass to PEG.buildParser");
   util.puts("      --statistics                   generate a parser which will collect");
   util.puts("                                     run-time statistics while parsing any inputs");
+  util.puts("      --verbose                      verbose output, including parser diagnostics");
   util.puts("      --elapsed-time                 report the time it took to build the parser");
   util.puts("  -v, --version                      print version information and exit");
   util.puts("  -h, --help                         print help and exit");
