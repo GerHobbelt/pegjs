@@ -1,5 +1,8 @@
 Runner = {
-  run: function(benchmarks, runCount, options, callbacks) {
+  run: function(benchmarks, runnerOptions, options, callbacks) {
+
+    // Fix the minimumRunTime to a sensible value: >= 100 msecs
+    runnerOptions.minimumRunTime = Math.max(runnerOptions.minimumRunTime || 1, 100);
 
     /* Queue */
 
@@ -90,7 +93,7 @@ Runner = {
 
         callbacks.testStart(benchmark, test, state);
 
-        if (0 < runCount) {
+        if (0 < runnerOptions.runCount) {
           Q.add(testRunnerSingleRun(i, j, 0));
         } else {
           Q.add(testRunnerFinish(i, j));
@@ -99,7 +102,8 @@ Runner = {
     }
 
     function testRunnerSingleRun(i, j, k) {
-      var oneRunTimeThreshold = 250;
+      // Fix the single timeslot to something sensible yet sub-second: 100..250 msecs
+      var oneRunTimeThreshold = Math.min(250, runnerOptions.minimumRunTime);
 
       function execOne(n) {
         n = n || 1;
@@ -152,7 +156,7 @@ Runner = {
         callbacks.testOneRound(benchmark, test, k, t_delta / t_done, state);
 
         k++;
-        if (state.runCount < runCount) {
+        if (state.runCount < runnerOptions.runCount || state.testParseTime < runnerOptions.minimumRunTime) {
           Q.add(testRunnerSingleRun(i, j, k));
         } else {
           Q.add(testRunnerFinish(i, j));
@@ -220,7 +224,7 @@ Runner = {
       Q.add(benchmarkInitializer(i));
       for (j = 0; j < benchmarks[i].tests.length; j++) {
         Q.add(testRunnerStart(i, j));
-        for (var k = 0; k < runCount; k++) {
+        for (var k = 0; k < runnerOptions.runCount; k++) {
           Q.add(testRunnerSingleRun(i, j, k));
         }
         Q.add(testRunnerFinish(i, j));

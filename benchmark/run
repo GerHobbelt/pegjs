@@ -182,7 +182,10 @@ if (args.length > 0) {
   abort("No arguments are allowed.");
 }
 
-Runner.run(benchmarks, runCount, options, {
+Runner.run(benchmarks, {
+  runCount: runCount,
+  minimumRunTime: 250
+}, options, {
   readFile: function(file) {
     return fs.readFileSync(__dirname + "/" + file, "utf8");
   },

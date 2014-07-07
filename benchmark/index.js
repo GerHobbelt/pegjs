@@ -63,6 +63,7 @@ $("#run").click(function() {
    */
 
   var runCount = parseInt($("#run-count").val(), 10),
+      minimumRunTime = parseInt($("#run-min-time").val(), 10),
       options  = {
         cache:              $("#cache").is(":checked"),
         includeRegionInfo:  $("#region").is(":checked"),
@@ -74,7 +75,10 @@ $("#run").click(function() {
     return;
   }
 
-  Runner.run(benchmarks, runCount, options, {
+  Runner.run(benchmarks, {
+    runCount: runCount,
+    minimumRunTime: minimumRunTime
+  }, options, {
     readFile: function(file) {
       return $.ajax({
         type:     "GET",
