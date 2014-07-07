@@ -187,8 +187,6 @@ Runner = {
 
     function benchmarkFinalizer(i) {
       return function() {
-        state.parser = null;
-
         state.totalInputSize += state.benchmarkInputSize;
         state.totalParseTime += state.benchmarkParseTime;
 
@@ -202,6 +200,8 @@ Runner = {
           state.benchmarkParseTime,
           state
         );
+
+        state.parser = null;
 
         i++;
         if (i < benchmarks.length) {

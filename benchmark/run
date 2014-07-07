@@ -240,8 +240,8 @@ Runner.run(benchmarks, {
     writeSeparator();
     writeResult(benchmark.title + " total", inputSize, parseTime);
 
-    if (options.collectRunTimeStatistics && PEG.parser && PEG.parser.getStatistics) {
-      statistics.report(PEG.parser.getStatistics(), options);
+    if (options.collectRunTimeStatistics && state.parser && state.parser.getStatistics) {
+      statistics.report(state.parser.getStatistics(), options);
     }
  },
 
