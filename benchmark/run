@@ -95,6 +95,7 @@ function printHelp() {
   util.puts("  -n, --run-count <n>          number of runs (default: 10)");
   util.puts("      --cache                  make tested parsers cache results");
   util.puts("      --includeRegionInfo      make tested parsers add region info to each AST node");
+  util.puts("      --statistics             make tested parsers collect run-time statistics");
   util.puts("  -o, --optimize <goal>        select optimization for speed or size (default:");
   util.puts("                               speed)");
 }
@@ -152,6 +153,10 @@ while (args.length > 0 && isOption(args[0])) {
 
     case "--includeRegionInfo":
       options.includeRegionInfo = true;
+      break;
+
+    case "--statistics":
+      options.collectRunTimeStatistics = true;
       break;
 
     case "-o":
@@ -230,7 +235,25 @@ Runner.run(benchmarks, {
   benchmarkFinish: function(benchmark, inputSize, parseTime, state) {
     writeSeparator();
     writeResult(benchmark.title + " total", inputSize, parseTime);
-  },
+
+    if (options.collectRunTimeStatistics && PEG.parser && PEG.parser.getStatistics) {
+      var stats = PEG.parser.getStatistics();
+      console.log("### Run-time Cache Hit Statistics: rules which used the cache:");
+      for (var f = 0, slen = stats.counters.length; f < slen; f++) {
+        if (stats.counters[f]) {
+          console.log("  Rule: " + stats.rulenames[f] + ":\t" + (stats.counters[f] ? stats.counters[f] : "---"));
+        }
+      }
+      /*
+      console.log("### Run-time Cache Hit Statistics: rules which did NOT use the cache:");
+      for (var f = 0, slen = stats.counters.length; f < slen; f++) {
+        if (!stats.counters[f]) {
+          console.log("  " + stats.rulenames[f]);
+        }
+      }
+      */
+    }
+ },
 
   start: function(state) {
     writeTableHeader();

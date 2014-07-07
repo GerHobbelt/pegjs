@@ -73,6 +73,13 @@
     return [first].concat(extractList(rest, index));
   }
 
+  // Merge N arrays into one, where all elements are concatenated in order.
+  //
+  // Return the resulting array.
+  //
+  // Notes: 
+  // - falsey arguments are ignored (contrasting with standard Array.concat() which inserts a null entry in the resultant array)
+  // - the returned array is a *shallow* clone.
   function mergeArrays(array1 /* , ... */ ) {
     var arr = Array.prototype.slice.call(arguments, 0);
 
