@@ -488,10 +488,12 @@ UnicodeDigit
 UnicodeConnectorPunctuation
   = Pc
 
-@cache
 ReservedWord
-  = EpsilonToken
-  / GreekEpsilonToken
+  = EpsilonKeywords
+// ^-- is faster than equiv. def below as duplicated rule content only benefits from memoization at the next *lower* level:
+//ReservedWord
+//  = EpsilonToken
+//  / GreekEpsilonToken
 
 LiteralMatcher "literal"
   = value:StringLiteral ignoreCase:"i"? {
