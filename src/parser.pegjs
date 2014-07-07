@@ -463,7 +463,11 @@ IdentifierStart
 
 @cache
 IdentifierPart
-  = IdentifierStart
+  = /* IdentifierStart */
+      UnicodeLetter
+      / "$"
+      / "_"
+      / "\\" sequence:UnicodeEscapeSequence { return sequence; }
   / UnicodeCombiningMark
   / UnicodeDigit
   / UnicodeConnectorPunctuation
