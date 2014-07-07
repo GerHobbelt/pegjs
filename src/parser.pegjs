@@ -160,32 +160,33 @@ Param
   = k:ParamKeyword __ {
       return {
         type: "param_keyword",
+        region: options.includeRegionInfo ? region() : false,
         value: k
       };
     }
   / str:StringLiteral __ {
       return {
         type: "param_string",
+        region: options.includeRegionInfo ? region() : false,
         value: str
       };
     }
   / n:Int __ {
       return {
         type: "param_number",
+        region: options.includeRegionInfo ? region() : false,
         value: n
       };
     }
   / r:Range2 __ {
       return {
         type: "param_range",
+        region: options.includeRegionInfo ? region() : false,
         value: r
       };
     }
   / annotation:Annotation {
-      return {
-        type: "annotation",
-        value: annotation
-      };
+      return annotation;
     }
 
 AnnotationKeyword
@@ -430,6 +431,7 @@ LineTerminatorSequence "end of line"
   / "\u2028"
   / "\u2029"
 
+@cache
 Comment "comment"
   = MultiLineComment
   / SingleLineComment
@@ -516,6 +518,7 @@ SingleStringCharacter
   / "\\" sequence:EscapeSequence { return sequence; }
   / LineContinuation
 
+@cache
 EpsilonMatcher "epsilon"
   = EpsilonKeywords __ {
       return {

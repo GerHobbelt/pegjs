@@ -4,6 +4,7 @@ var util = require("util");
 var fs   = require("fs");
 var path = require("path");
 var PEG  = require("../lib/peg");
+var statistics = require("../lib/statistics");
 
 var options;
 
@@ -111,7 +112,8 @@ function nextArg() {
 
 /* This makes the generated parser a CommonJS module by default. */
 options = {
-  cache:    false,
+  cache:    0,
+  collectRunTimeStatistics: 0,
   verboseOutput: false,
   output:   "source",
   optimize: "speed",
@@ -139,11 +141,11 @@ while (args.length > 0 && isOption(args[0])) {
       break;
 
     case "--cache":
-      options.cache = true;
+      options.cache++;
       break;
 
     case "--statistics":
-      options.collectRunTimeStatistics = true;
+      options.collectRunTimeStatistics++;
       break;
 
     case "--allowed-start-rules":
@@ -307,21 +309,7 @@ function stream(inputStream, outputStream) {
     }
 
     if (options.collectRunTimeStatistics && PEG.parser && PEG.parser.getStatistics) {
-      var stats = PEG.parser.getStatistics();
-      console.log("### Run-time Cache Hit Statistics: rules which used the cache:");
-      for (var f = 0, slen = stats.counters.length; f < slen; f++) {
-        if (stats.counters[f]) {
-          console.log("  Rule: " + stats.rulenames[f] + ":\t" + (stats.counters[f] ? stats.counters[f] : "---"));
-        }
-      }
-      /*
-      console.log("### Run-time Cache Hit Statistics: rules which did NOT use the cache:");
-      for (var f = 0, slen = stats.counters.length; f < slen; f++) {
-        if (!stats.counters[f]) {
-          console.log("  " + stats.rulenames[f]);
-        }
-      }
-      */
+      statistics.report(PEG.parser.getStatistics(), options);
     }
 
     outputStream.write(

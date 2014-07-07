@@ -3,6 +3,7 @@
 var util = require("util");
 var fs   = require("fs");
 var PEG  = require("../lib/peg");
+var statistics = require("../lib/statistics");
 
 [
   "benchmarks.js",
@@ -129,8 +130,11 @@ function nextArg() {
 
 var runCount = 10;
 var options = {
-  cache:    false,
-  optimize: "speed"
+  cache:    0,
+  collectRunTimeStatistics: 0,
+  verboseOutput: false,
+  optimize: "speed",
+  plugins:  []
 };
 
 while (args.length > 0 && isOption(args[0])) {
@@ -148,7 +152,7 @@ while (args.length > 0 && isOption(args[0])) {
       break;
 
     case "--cache":
-      options.cache = true;
+      options.cache++;
       break;
 
     case "--includeRegionInfo":
@@ -156,7 +160,7 @@ while (args.length > 0 && isOption(args[0])) {
       break;
 
     case "--statistics":
-      options.collectRunTimeStatistics = true;
+      options.collectRunTimeStatistics++;
       break;
 
     case "-o":
@@ -237,21 +241,7 @@ Runner.run(benchmarks, {
     writeResult(benchmark.title + " total", inputSize, parseTime);
 
     if (options.collectRunTimeStatistics && PEG.parser && PEG.parser.getStatistics) {
-      var stats = PEG.parser.getStatistics();
-      console.log("### Run-time Cache Hit Statistics: rules which used the cache:");
-      for (var f = 0, slen = stats.counters.length; f < slen; f++) {
-        if (stats.counters[f]) {
-          console.log("  Rule: " + stats.rulenames[f] + ":\t" + (stats.counters[f] ? stats.counters[f] : "---"));
-        }
-      }
-      /*
-      console.log("### Run-time Cache Hit Statistics: rules which did NOT use the cache:");
-      for (var f = 0, slen = stats.counters.length; f < slen; f++) {
-        if (!stats.counters[f]) {
-          console.log("  " + stats.rulenames[f]);
-        }
-      }
-      */
+      statistics.report(PEG.parser.getStatistics(), options);
     }
  },
 

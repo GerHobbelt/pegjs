@@ -64,7 +64,7 @@ all: browser
 
 # Generate the grammar parser
 parser:
-	$(PEGJS) --verbose --elapsed-time --cache --statistics  $(PARSER_SRC_FILE) $(PARSER_OUT_FILE)
+	$(PEGJS) --verbose --elapsed-time --cache --cache --statistics  $(PARSER_SRC_FILE) $(PARSER_OUT_FILE)
 
 # Build the browser version of the library
 browser: parser
