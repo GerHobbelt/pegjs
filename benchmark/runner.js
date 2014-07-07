@@ -48,6 +48,12 @@ Runner = {
       state.totalTestFailCount = 0;
 
       callbacks.start(state);
+
+      if (0 < benchmarks.length) {
+        Q.add(benchmarkInitializer(0));
+      } else {
+        Q.add(finalize);
+      }
     }
 
     function benchmarkInitializer(i) {
@@ -61,6 +67,12 @@ Runner = {
         );
 
         callbacks.benchmarkStart(benchmarks[i], state);
+
+        if (0 < benchmarks[i].tests.length) {
+          Q.add(testRunnerStart(i, 0));
+        } else {
+          Q.add(benchmarkFinalizer(i));
+        }
       };
     }
 
@@ -77,32 +89,74 @@ Runner = {
         state.testFailCollection = [];
 
         callbacks.testStart(benchmark, test, state);
+
+        if (0 < runCount) {
+          Q.add(testRunnerSingleRun(i, j, 0));
+        } else {
+          Q.add(testRunnerFinish(i, j));
+        }
       };
     }
 
     function testRunnerSingleRun(i, j, k) {
+      var oneRunTimeThreshold = 250;
+
+      function execOne(n) {
+        n = n || 1;
+        var i;
+        for (i = 0; i < n; i++) {
+          try {
+            state.parser.parse(state.testInput);
+          } catch (ex) {
+            exMsg = ex;
+            state.testFailCollection.push({
+              benchmark: i,
+              test: j,
+              round: k,
+              failure: exMsg
+            });
+          }
+        }
+        return i;
+      }
+
       return function() {
         var benchmark = benchmarks[i];
         var test = benchmark.tests[j];
         var exMsg = false;
 
         var t = (new Date()).getTime();
-        try {
-          state.parser.parse(state.testInput);
-        } catch (ex) {
-          exMsg = ex;
-          state.testFailCollection.push({
-            benchmark: i,
-            test: j,
-            round: k,
-            failure: exMsg
-          });
-        }
+        var t_done = execOne(1);
         var t_delta = (new Date()).getTime() - t;
-        state.singleRunParseTime[k] = t_delta;
+
+        // Heuristic: if the testrun was very fast (< 250 msec) then we execute
+        // multiple rounds at once!
+        //
+        // Note:
+        //
+        // We also realize that we include a bit of 'overhead code' inside the test
+        // timeframe, but this stuff is very fast so we're fine with it, given the
+        // accuracy of the entire test.
+        while (t_delta < oneRunTimeThreshold) {
+          var t1 = Math.max(t_delta, 10);
+          var t_count = Math.floor(oneRunTimeThreshold * t_done / t1);
+          
+          t_done += execOne(t_count - t_done);
+
+          t_delta = (new Date()).getTime() - t;
+          //console.log("single run count adjusted: ", t_done, ", time spent: ", t_delta);
+        }
+        state.singleRunParseTime[k] = t_delta / t_done;
         state.testParseTime += t_delta;
-        state.runCount++;
-        callbacks.testOneRound(benchmark, test, k, t_delta, state);
+        state.runCount += t_done;
+        callbacks.testOneRound(benchmark, test, k, t_delta / t_done, state);
+
+        k++;
+        if (state.runCount < runCount) {
+          Q.add(testRunnerSingleRun(i, j, k));
+        } else {
+          Q.add(testRunnerFinish(i, j));
+        }
       };
     }
 
@@ -117,6 +171,13 @@ Runner = {
         state.benchmarkParseTime += averageParseTime;
 
         callbacks.testFinish(benchmark, test, state.testInput.length, averageParseTime, state);
+
+        j++;
+        if (j < benchmarks[i].tests.length) {
+          Q.add(testRunnerStart(i, j));
+        } else {
+          Q.add(benchmarkFinalizer(i));
+        }
       };
     }
 
@@ -137,6 +198,13 @@ Runner = {
           state.benchmarkParseTime,
           state
         );
+
+        i++;
+        if (i < benchmarks.length) {
+          Q.add(benchmarkInitializer(i));
+        } else {
+          Q.add(finalize);
+        }
       };
     }
 
@@ -147,6 +215,7 @@ Runner = {
     /* Main */
 
     Q.add(initialize);
+/*
     for (i = 0; i < benchmarks.length; i++) {
       Q.add(benchmarkInitializer(i));
       for (j = 0; j < benchmarks[i].tests.length; j++) {
@@ -159,6 +228,7 @@ Runner = {
       Q.add(benchmarkFinalizer(i));
     }
     Q.add(finalize);
+*/
 
     Q.run();
   }

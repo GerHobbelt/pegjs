@@ -64,7 +64,7 @@ all: browser
 
 # Generate the grammar parser
 parser:
-	$(PEGJS) --verbose --elapsed-time --cache --statistics $(PARSER_SRC_FILE) $(PARSER_OUT_FILE)
+	$(PEGJS) --verbose --elapsed-time --cache --statistics  $(PARSER_SRC_FILE) $(PARSER_OUT_FILE)
 
 # Build the browser version of the library
 browser: parser
@@ -137,7 +137,11 @@ all-benchmarks:								\
 			benchmark 						\
 			benchmark-cache 				\
 			benchmark-locinfo 				\
-			benchmark-cache-locinfo 
+			benchmark-cache-locinfo 		\
+			benchmark-size 					\
+			benchmark-size-cache 			\
+			benchmark-size-locinfo 			\
+			benchmark-size-cache-locinfo 
 
 benchmark: parser
 	$(BENCHMARK_RUN)
@@ -150,6 +154,18 @@ benchmark-locinfo: parser
 
 benchmark-cache-locinfo: parser
 	$(BENCHMARK_RUN) --cache --includeRegionInfo
+
+benchmark-size: parser
+	$(BENCHMARK_RUN) --optimize size
+
+benchmark-size-cache: parser
+	$(BENCHMARK_RUN) --cache --optimize size
+
+benchmark-size-locinfo: parser
+	$(BENCHMARK_RUN) --includeRegionInfo --optimize size
+
+benchmark-size-cache-locinfo: parser
+	$(BENCHMARK_RUN) --cache --includeRegionInfo --optimize size
 
 # Run JSHint on the source
 hint: parser

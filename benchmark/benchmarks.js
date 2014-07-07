@@ -41,7 +41,11 @@ benchmarks = [
     tests: [
       { file: "../vendor/jquery.scrollto/jquery.scrollTo.js",
                                               title: "jQuery = scrollTo add-on (source)"   },
-      { file: "../../lib/parser.js",          title: "PEG - parser.js (source)"            }
+      { file: "../../lib/parser.js",          title: "PEG - parser.js (source)"            },
+      { file: "../../lib/compiler.js",        title: "PEG - compiler.js (source)"          },
+      { file: "../../lib/compiler/visitor.js", title: "PEG - AST visitor.js (source)"      },
+      { file: "../../spec/vendor/jasmine/jasmine.js", title: "PEG - Jasmine test suite (source)" },
+      { file: "../../benchmark/runner.js",    title: "PEG - test runner core (source)"     }
     ]
   }
 ];
