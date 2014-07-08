@@ -201,6 +201,7 @@ AnnotationKeyword
   / FailToken
   / FinallyToken
   / ImportToken
+  / InlineToken
   / LeftToken
   / MacroToken
   / MessageToken
@@ -767,6 +768,7 @@ TrueToken          = "true"          !IdentifierPart
 FinallyToken       = "finally"       !IdentifierPart
 GreekEpsilonToken  = "\u03B5"        !IdentifierPart
 ImportToken        = "import"        !IdentifierPart
+InlineToken        = "inline"        !IdentifierPart
 LeftToken          = "left"          !IdentifierPart
 MacroToken         = "macro"         !IdentifierPart
 MessageToken       = "message"       !IdentifierPart

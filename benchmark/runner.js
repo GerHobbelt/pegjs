@@ -4,6 +4,9 @@ Runner = {
     // Fix the minimumRunTime to a sensible value: >= 100 msecs
     runnerOptions.minimumRunTime = Math.max(runnerOptions.minimumRunTime || 1, 100);
 
+    // make sure the baseDir path always has a trailing dir separator (i.e. a '/' slash)
+    runnerOptions.baseDir = (runnerOptions.baseDir || "../examples/").replace(/([^\/])$/, "$1/");
+
     /* Queue */
 
     var Q = {
@@ -65,13 +68,13 @@ Runner = {
         state.benchmarkParseTime = 0;
 
         state.parser = PEG.buildParser(
-          callbacks.readFile("../examples/" + benchmarks[i].id + ".pegjs"),
+          callbacks.readFile(runnerOptions.baseDir + benchmarks[i].id + ".pegjs"),
           options
         );
 
         callbacks.benchmarkStart(benchmarks[i], state);
 
-        if (0 < benchmarks[i].tests.length) {
+        if (benchmarks[i].tests && 0 < benchmarks[i].tests.length) {
           Q.add(testRunnerStart(i, 0));
         } else {
           Q.add(benchmarkFinalizer(i));
@@ -169,6 +172,10 @@ Runner = {
         var benchmark = benchmarks[i];
         var test = benchmark.tests[j];
 
+        if (state.testFailCollection.length > 0) {
+          state.totalTestFailCount++;
+        }
+
         var averageParseTime = state.testParseTime / state.runCount;
 
         state.benchmarkInputSize += state.testInput.length;
@@ -189,10 +196,6 @@ Runner = {
       return function() {
         state.totalInputSize += state.benchmarkInputSize;
         state.totalParseTime += state.benchmarkParseTime;
-
-        if (state.testFailCollection.length > 0) {
-          state.totalTestFailCount++;
-        }
 
         callbacks.benchmarkFinish(
           benchmarks[i],

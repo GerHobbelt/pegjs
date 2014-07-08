@@ -147,7 +147,7 @@ benchmark: parser
 	$(BENCHMARK_RUN)
 
 benchmark-cache: parser
-	$(BENCHMARK_RUN) --cache --statistics
+	$(BENCHMARK_RUN) --cache
 
 benchmark-locinfo: parser
 	$(BENCHMARK_RUN) --includeRegionInfo

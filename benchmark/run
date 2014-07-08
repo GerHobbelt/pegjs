@@ -72,7 +72,7 @@ function writeResult(title, inputSize, parseTime) {
     + " kB │ "
     + padLeft(parseTime.toFixed(2), 7)
     + " ms │ "
-    + padLeft(((inputSize / KB) / (parseTime / MS_IN_S)).toFixed(2), 7)
+    + padLeft((parseTime ? ((inputSize / KB) / (parseTime / MS_IN_S)).toFixed(2) : "---"), 7)
     + " kB/s │"
   );
 }
@@ -88,9 +88,13 @@ function writeTableFooter() {
 /* Helpers */
 
 function printHelp() {
-  util.puts("Usage: run [options]");
+  util.puts("Usage: run [options] [<benchmarks_file>]");
   util.puts("");
   util.puts("Runs PEG.js benchmark suite.");
+  util.puts("");
+  util.puts("You may pass an optional JSON benchmarks definition list file");
+  util.puts("which will be used instead of the internal default benchmark");
+  util.puts("set.");
   util.puts("");
   util.puts("Options:");
   util.puts("  -n, --run-count <n>          number of runs (default: 10)");
@@ -99,6 +103,17 @@ function printHelp() {
   util.puts("      --statistics             make tested parsers collect run-time statistics");
   util.puts("  -o, --optimize <goal>        select optimization for speed or size (default:");
   util.puts("                               speed)");
+  util.puts("      --plugin <plugin>        use a specified plugin (can be specified");
+  util.puts("                               multiple times)");
+  util.puts("      --extra-options <options>");
+  util.puts("                               additional options (in JSON format) to pass");
+  util.puts("                               to PEG.buildParser");
+  util.puts("      --extra-options-file <file>");
+  util.puts("                               file with additional options (in JSON");
+  util.puts("                               format) to pass to PEG.buildParser");
+  util.puts("      --verbose                verbose output, including parser diagnostics");
+  util.puts("  -v, --version                print version information and exit");
+  util.puts("  -h, --help                   print help and exit");
 }
 
 function exitSuccess() {
@@ -109,9 +124,33 @@ function exitFailure() {
   process.exit(1);
 }
 
-function abort(message) {
+function abort(message, ex) {
   util.error(message);
+  if (options.verboseOutput && ex && ex.stack) {
+    console.log("Stacktrace:\n", ex.stack);
+  }
   exitFailure();
+}
+
+function addExtraOptions(options, json) {
+  var extraOptions;
+
+  try {
+    extraOptions = JSON.parse(json);
+  } catch (e) {
+    if (!(e instanceof SyntaxError)) { throw e; }
+
+    abort("Error parsing JSON: " + e.message, e);
+  }
+  if (typeof extraOptions !== "object") {
+    abort("The JSON with extra options has to represent an object.");
+  }
+
+  for (var key in extraOptions) {
+    if (extraOptions.hasOwnProperty(key)) {
+      options[key] = extraOptions[key];
+    }
+  }
 }
 
 /* Arguments */
@@ -125,6 +164,7 @@ function isOption(arg) {
 function nextArg() {
   args.shift();
 }
+
 
 /* Main */
 
@@ -175,10 +215,62 @@ while (args.length > 0 && isOption(args[0])) {
       options.optimize = args[0];
       break;
 
+    case "--plugin":
+      nextArg();
+      if (args.length === 0) {
+        abort("Missing parameter of the --plugin option.");
+      }
+      var id = /^(\.\/|\.\.\/)/.test(args[0]) ? path.resolve(args[0]) : args[0];
+      var mod;
+      try {
+        mod = require(id);
+      } catch (e) {
+        if (e.code !== "MODULE_NOT_FOUND") { throw e; }
+
+        abort("Can't load module \"" + id + "\".", e);
+      }
+      options.plugins.push(mod);
+      break;
+
+    case "--extra-options":
+      nextArg();
+      if (args.length === 0) {
+        abort("Missing parameter of the --extra-options option.");
+      }
+      addExtraOptions(options, args[0]);
+      break;
+
+    case "--extra-options-file":
+      nextArg();
+      if (args.length === 0) {
+        abort("Missing parameter of the --extra-options-file option.");
+      }
+      try {
+        var json = fs.readFileSync(args[0]);
+      } catch(e) {
+        abort("Can't read from file \"" + args[0] + "\".");
+      }
+      addExtraOptions(options, json);
+      break;
+
+    case "--verbose":
+      options.verboseOutput = true;
+      break;
+
+    case "-v":
+    case "--version":
+      printVersion();
+      exitSuccess();
+      break;
+
     case "-h":
     case "--help":
       printHelp();
       exitSuccess();
+      break;
+
+    case "--":
+      nextArg();
       break;
 
     default:
@@ -187,8 +279,17 @@ while (args.length > 0 && isOption(args[0])) {
   nextArg();
 }
 
-if (args.length > 0) {
-  abort("No arguments are allowed.");
+switch (args.length) {
+  case 0:
+    break;
+
+  case 1:
+    // load benchmarks JSON definition list file
+    benchmarks = JSON.parse(fs.readFileSync(args[0], { encoding: 'utf8' })).benchmarks;
+    break;
+
+  default:
+    abort("Too many arguments.");
 }
 
 Runner.run(benchmarks, {
