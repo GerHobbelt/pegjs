@@ -64,17 +64,23 @@ Runner = {
 
     function benchmarkInitializer(i) {
       return function() {
-        state.benchmarkInputSize = 0;
-        state.benchmarkParseTime = 0;
+        var bench = benchmarks[i];
 
-        state.parser = PEG.buildParser(
-          callbacks.readFile(runnerOptions.baseDir + benchmarks[i].id + ".pegjs"),
-          options
-        );
+        if (bench.skip) {
+          bench = {};         // force skipping both the test runs and the initializer/finalizer too.
+        } else {
+          state.benchmarkInputSize = 0;
+          state.benchmarkParseTime = 0;
 
-        callbacks.benchmarkStart(benchmarks[i], state);
+          state.parser = PEG.buildParser(
+            callbacks.readFile(runnerOptions.baseDir + bench.id + ".pegjs"),
+            options
+          );
 
-        if (benchmarks[i].tests && 0 < benchmarks[i].tests.length) {
+          callbacks.benchmarkStart(bench, state);
+        }
+
+        if (bench.tests && 0 < bench.tests.length) {
           Q.add(testRunnerStart(i, 0));
         } else {
           Q.add(benchmarkFinalizer(i));
@@ -194,17 +200,22 @@ Runner = {
 
     function benchmarkFinalizer(i) {
       return function() {
-        state.totalInputSize += state.benchmarkInputSize;
-        state.totalParseTime += state.benchmarkParseTime;
+        var bench = benchmarks[i];
 
-        callbacks.benchmarkFinish(
-          benchmarks[i],
-          state.benchmarkInputSize,
-          state.benchmarkParseTime,
-          state
-        );
+        // force skipping both the test runs and the initializer/finalizer too?
+        if (!bench.skip) {
+          state.totalInputSize += state.benchmarkInputSize;
+          state.totalParseTime += state.benchmarkParseTime;
 
-        state.parser = null;
+          callbacks.benchmarkFinish(
+            bench,
+            state.benchmarkInputSize,
+            state.benchmarkParseTime,
+            state
+          );
+
+          state.parser = null;
+        }
 
         i++;
         if (i < benchmarks.length) {
