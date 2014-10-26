@@ -91,20 +91,20 @@ describe("PEG.js grammar parser", function() {
     return oneRuleGrammar({ type: "rule_ref", name: name });
   }
 
-  function rangeGrammar(min, max, constant) {
+  function rangeGrammar(min, max) {
     return oneRuleGrammar({
       type:       "range",
-      min:        { constant: constant, value: min },
-      max:        { constant: constant, value: max },
+      min:        { constant: !(typeof min === "string"), value: min },
+      max:        { constant: !(typeof max === "string"), value: max },
       expression: literalAbcd,
       delimiter:  null
     });
   }
-  function rangeGrammar2(min, max, constant) {
+  function rangeGrammar2(min, max) {
     return oneRuleGrammar({
       type:       "range",
-      min:        { constant: constant, value: min },
-      max:        { constant: constant, value: max },
+      min:        { constant: !(typeof min === "string"), value: min },
+      max:        { constant: !(typeof max === "string"), value: max },
       expression: literalAbcd,
       delimiter:  literalEfgh
     });
@@ -315,77 +315,175 @@ describe("PEG.js grammar parser", function() {
 
   /* Canonical RangeExpression is "\"abcd\"|2..3|". */
   describe("parses RangeExpression", function() {
-    it("without delimiter", function() {
-      var grammar = rangeGrammar(2, 3, true);
-      expect('start = "abcd"|2..3|'  ).toParseAs(grammar);
-      expect('start = "abcd"\n|2..3|').toParseAs(grammar);
-      expect('start = "abcd"|\n2..3|').toParseAs(grammar);
-      expect('start = "abcd"|2\n..3|').toParseAs(grammar);
-      expect('start = "abcd"|2..\n3|').toParseAs(grammar);
-      expect('start = "abcd"|2..3\n|').toParseAs(grammar);
+    describe("with constant boundaries", function() {
+      it("without delimiter", function() {
+        var grammar = rangeGrammar(2, 3);
+        expect('start = "abcd"|2..3|'  ).toParseAs(grammar);
+        expect('start = "abcd"\n|2..3|').toParseAs(grammar);
+        expect('start = "abcd"|\n2..3|').toParseAs(grammar);
+        expect('start = "abcd"|2\n..3|').toParseAs(grammar);
+        expect('start = "abcd"|2..\n3|').toParseAs(grammar);
+        expect('start = "abcd"|2..3\n|').toParseAs(grammar);
 
-      grammar = rangeGrammar(3, 3, true);
-      expect('start = "abcd"\n|3|').toParseAs(grammar);
-      expect('start = "abcd"|\n3|').toParseAs(grammar);
-      expect('start = "abcd"|3\n|').toParseAs(grammar);
+        grammar = rangeGrammar(3, 3);
+        expect('start = "abcd"\n|3|').toParseAs(grammar);
+        expect('start = "abcd"|\n3|').toParseAs(grammar);
+        expect('start = "abcd"|3\n|').toParseAs(grammar);
+      });
+
+      it("with delimiter", function() {
+        var grammar = rangeGrammar2(2, 3);
+        expect('start = "abcd"|2..3,"efgh"|'  ).toParseAs(grammar);
+        expect('start = "abcd"\n|2..3,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|\n2..3,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|2\n..3,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|2..\n3,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|2..3\n,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|2..3,\n"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|2..3,"efgh"\n|').toParseAs(grammar);
+
+        grammar = rangeGrammar2(3, 3);
+        expect('start = "abcd"\n|3,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|\n3,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|3\n,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|3,\n"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|3,"efgh"\n|').toParseAs(grammar);
+      });
     });
 
-    it("with delimiter", function() {
-      var grammar = rangeGrammar2(2, 3, true);
-      expect('start = "abcd"|2..3,"efgh"|'  ).toParseAs(grammar);
-      expect('start = "abcd"\n|2..3,"efgh"|').toParseAs(grammar);
-      expect('start = "abcd"|\n2..3,"efgh"|').toParseAs(grammar);
-      expect('start = "abcd"|2\n..3,"efgh"|').toParseAs(grammar);
-      expect('start = "abcd"|2..\n3,"efgh"|').toParseAs(grammar);
-      expect('start = "abcd"|2..3\n,"efgh"|').toParseAs(grammar);
-      expect('start = "abcd"|2..3,\n"efgh"|').toParseAs(grammar);
-      expect('start = "abcd"|2..3,"efgh"\n|').toParseAs(grammar);
+    describe("with variable boundaries", function() {
+      it("without delimiter", function() {
+        var grammar = rangeGrammar('min', 'max');
+        expect('start = "abcd"|min..max|'  ).toParseAs(grammar);
+        expect('start = "abcd"\n|min..max|').toParseAs(grammar);
+        expect('start = "abcd"|\nmin..max|').toParseAs(grammar);
+        expect('start = "abcd"|min\n..max|').toParseAs(grammar);
+        expect('start = "abcd"|min..\nmax|').toParseAs(grammar);
+        expect('start = "abcd"|min..max\n|').toParseAs(grammar);
 
-      grammar = rangeGrammar2(3, 3, true);
-      expect('start = "abcd"\n|3,"efgh"|').toParseAs(grammar);
-      expect('start = "abcd"|\n3,"efgh"|').toParseAs(grammar);
-      expect('start = "abcd"|3\n,"efgh"|').toParseAs(grammar);
-      expect('start = "abcd"|3,\n"efgh"|').toParseAs(grammar);
-      expect('start = "abcd"|3,"efgh"\n|').toParseAs(grammar);
+        grammar = rangeGrammar('exact', 'exact');
+        expect('start = "abcd"\n|exact|').toParseAs(grammar);
+        expect('start = "abcd"|\nexact|').toParseAs(grammar);
+        expect('start = "abcd"|exact\n|').toParseAs(grammar);
+      });
+
+      it("with delimiter", function() {
+        var grammar = rangeGrammar2('min', 'max');
+        expect('start = "abcd"|min..max,"efgh"|'  ).toParseAs(grammar);
+        expect('start = "abcd"\n|min..max,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|\nmin..max,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|min\n..max,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|min..\nmax,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|min..max\n,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|min..max,\n"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|min..max,"efgh"\n|').toParseAs(grammar);
+
+        grammar = rangeGrammar2('exact', 'exact');
+        expect('start = "abcd"\n|exact,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|\nexact,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|exact\n,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|exact,\n"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|exact,"efgh"\n|').toParseAs(grammar);
+      });
+    });
+
+    describe("with mixed boundaries", function() {
+      it("without delimiter", function() {
+        var grammar = rangeGrammar(2, 'max');
+        expect('start = "abcd"|2..max|'  ).toParseAs(grammar);
+        expect('start = "abcd"\n|2..max|').toParseAs(grammar);
+        expect('start = "abcd"|\n2..max|').toParseAs(grammar);
+        expect('start = "abcd"|2\n..max|').toParseAs(grammar);
+        expect('start = "abcd"|2..\nmax|').toParseAs(grammar);
+        expect('start = "abcd"|2..max\n|').toParseAs(grammar);
+
+        grammar = rangeGrammar('min', 3);
+        expect('start = "abcd"|min..3|'  ).toParseAs(grammar);
+        expect('start = "abcd"\n|min..3|').toParseAs(grammar);
+        expect('start = "abcd"|\nmin..3|').toParseAs(grammar);
+        expect('start = "abcd"|min\n..3|').toParseAs(grammar);
+        expect('start = "abcd"|min..\n3|').toParseAs(grammar);
+        expect('start = "abcd"|min..3\n|').toParseAs(grammar);
+      });
+
+      it("with delimiter", function() {
+        var grammar = rangeGrammar2(2, 'max');
+        expect('start = "abcd"|2..max,"efgh"|'  ).toParseAs(grammar);
+        expect('start = "abcd"\n|2..max,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|\n2..max,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|2\n..max,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|2..\nmax,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|2..max\n,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|2..max,\n"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|2..max,"efgh"\n|').toParseAs(grammar);
+
+        grammar = rangeGrammar2('min', 3);
+        expect('start = "abcd"|min..3,"efgh"|'  ).toParseAs(grammar);
+        expect('start = "abcd"\n|min..3,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|\nmin..3,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|min\n..3,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|min..\n3,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|min..3\n,"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|min..3,\n"efgh"|').toParseAs(grammar);
+        expect('start = "abcd"|min..3,"efgh"\n|').toParseAs(grammar);
+      });
     });
   });
 
   /* Canonical RangeOperator is "|2..3|". */
   describe("parses RangeOperator", function() {
-    it("without delimiter", function() {
-      expect('start = "abcd"| .. |').toParseAs(rangeGrammar(0, null, true));
-      expect('start = "abcd"|0.. |').toParseAs(rangeGrammar(0, null, true));
-      expect('start = "abcd"|1.. |').toParseAs(rangeGrammar(1, null, true));
-      expect('start = "abcd"|2.. |').toParseAs(rangeGrammar(2, null, true));
+    describe("with constant boundaries", function() {
+      it("without delimiter", function() {
+        expect('start = "abcd"| .. |').toParseAs(rangeGrammar(0, null));
+        expect('start = "abcd"|0.. |').toParseAs(rangeGrammar(0, null));
+        expect('start = "abcd"|1.. |').toParseAs(rangeGrammar(1, null));
+        expect('start = "abcd"|2.. |').toParseAs(rangeGrammar(2, null));
 
-      expect('start = "abcd"| ..1|').toParseAs(rangeGrammar(0, 1, true));
-      expect('start = "abcd"| ..2|').toParseAs(rangeGrammar(0, 2, true));
+        expect('start = "abcd"| ..1|').toParseAs(rangeGrammar(0, 1));
+        expect('start = "abcd"| ..2|').toParseAs(rangeGrammar(0, 2));
 
-      expect('start = "abcd"|2..2|').toParseAs(rangeGrammar(2, 2, true));
-      expect('start = "abcd"|2..3|').toParseAs(rangeGrammar(2, 3, true));
-      expect('start = "abcd"|3|').toParseAs(rangeGrammar(3, 3, true));
+        expect('start = "abcd"|2..2|').toParseAs(rangeGrammar(2, 2));
+        expect('start = "abcd"|2..3|').toParseAs(rangeGrammar(2, 3));
+        expect('start = "abcd"|3|').toParseAs(rangeGrammar(3, 3));
 
-      expect('start = "abcd"| ..0|').toFailToParse();
-      expect('start = "abcd"|0..0|').toFailToParse();
-      expect('start = "abcd"|0|').toFailToParse();
+        expect('start = "abcd"| ..0|').toFailToParse();
+        expect('start = "abcd"|0..0|').toFailToParse();
+        expect('start = "abcd"|0|').toFailToParse();
+      });
+
+      it("with delimiter", function() {
+        expect('start = "abcd"| .. , "efgh"|').toParseAs(rangeGrammar2(0, null));
+        expect('start = "abcd"|0.. , "efgh"|').toParseAs(rangeGrammar2(0, null));
+        expect('start = "abcd"|1.. , "efgh"|').toParseAs(rangeGrammar2(1, null));
+        expect('start = "abcd"|2.. , "efgh"|').toParseAs(rangeGrammar2(2, null));
+
+        expect('start = "abcd"| ..1, "efgh"|').toParseAs(rangeGrammar2(0, 1));
+        expect('start = "abcd"| ..2, "efgh"|').toParseAs(rangeGrammar2(0, 2));
+
+        expect('start = "abcd"|2..2, "efgh"|').toParseAs(rangeGrammar2(2, 2));
+        expect('start = "abcd"|2..3, "efgh"|').toParseAs(rangeGrammar2(2, 3));
+        expect('start = "abcd"|3   , "efgh"|').toParseAs(rangeGrammar2(3, 3));
+
+        expect('start = "abcd"| ..0, "efgh"|').toFailToParse();
+        expect('start = "abcd"|0..0, "efgh"|').toFailToParse();
+        expect('start = "abcd"|0   , "efgh"|').toFailToParse();
+      });
     });
 
-    it("with delimiter", function() {
-      expect('start = "abcd"| .. , "efgh"|').toParseAs(rangeGrammar2(0, null, true));
-      expect('start = "abcd"|0.. , "efgh"|').toParseAs(rangeGrammar2(0, null, true));
-      expect('start = "abcd"|1.. , "efgh"|').toParseAs(rangeGrammar2(1, null, true));
-      expect('start = "abcd"|2.. , "efgh"|').toParseAs(rangeGrammar2(2, null, true));
+    describe("with variable boundaries", function() {
+      it("without delimiter", function() {
+        expect('start = "abcd"|min..   |').toParseAs(rangeGrammar('min', null));
+        expect('start = "abcd"|   ..max|').toParseAs(rangeGrammar(0, 'max'));
+        expect('start = "abcd"|min..max|').toParseAs(rangeGrammar('min', 'max'));
+        expect('start = "abcd"|exact|').toParseAs(rangeGrammar('exact', 'exact'));
+      });
 
-      expect('start = "abcd"| ..1, "efgh"|').toParseAs(rangeGrammar2(0, 1, true));
-      expect('start = "abcd"| ..2, "efgh"|').toParseAs(rangeGrammar2(0, 2, true));
-
-      expect('start = "abcd"|2..2, "efgh"|').toParseAs(rangeGrammar2(2, 2, true));
-      expect('start = "abcd"|2..3, "efgh"|').toParseAs(rangeGrammar2(2, 3, true));
-      expect('start = "abcd"|3   , "efgh"|').toParseAs(rangeGrammar2(3, 3, true));
-
-      expect('start = "abcd"| ..0, "efgh"|').toFailToParse();
-      expect('start = "abcd"|0..0, "efgh"|').toFailToParse();
-      expect('start = "abcd"|0   , "efgh"|').toFailToParse();
+      it("with delimiter", function() {
+        expect('start = "abcd"|min..   , "efgh"|').toParseAs(rangeGrammar2('min', null));
+        expect('start = "abcd"|   ..max, "efgh"|').toParseAs(rangeGrammar2(0, 'max'));
+        expect('start = "abcd"|min..max, "efgh"|').toParseAs(rangeGrammar2('min', 'max'));
+        expect('start = "abcd"|exact, "efgh"|').toParseAs(rangeGrammar2('exact', 'exact'));
+      });
     });
   });
 
