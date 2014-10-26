@@ -91,20 +91,20 @@ describe("PEG.js grammar parser", function() {
     return oneRuleGrammar({ type: "rule_ref", name: name });
   }
 
-  function rangeGrammar(min, max) {
+  function rangeGrammar(min, max, constant) {
     return oneRuleGrammar({
       type:       "range",
-      min:        min,
-      max:        max,
+      min:        { constant: constant, value: min },
+      max:        { constant: constant, value: max },
       expression: literalAbcd,
       delimiter:  null
     });
   }
-  function rangeGrammar2(min, max) {
+  function rangeGrammar2(min, max, constant) {
     return oneRuleGrammar({
       type:       "range",
-      min:        min,
-      max:        max,
+      min:        { constant: constant, value: min },
+      max:        { constant: constant, value: max },
       expression: literalAbcd,
       delimiter:  literalEfgh
     });
@@ -316,7 +316,7 @@ describe("PEG.js grammar parser", function() {
   /* Canonical RangeExpression is "\"abcd\"|2..3|". */
   describe("parses RangeExpression", function() {
     it("without delimiter", function() {
-      var grammar = rangeGrammar(2, 3);
+      var grammar = rangeGrammar(2, 3, true);
       expect('start = "abcd"|2..3|'  ).toParseAs(grammar);
       expect('start = "abcd"\n|2..3|').toParseAs(grammar);
       expect('start = "abcd"|\n2..3|').toParseAs(grammar);
@@ -324,14 +324,14 @@ describe("PEG.js grammar parser", function() {
       expect('start = "abcd"|2..\n3|').toParseAs(grammar);
       expect('start = "abcd"|2..3\n|').toParseAs(grammar);
 
-      grammar = rangeGrammar(3, 3);
+      grammar = rangeGrammar(3, 3, true);
       expect('start = "abcd"\n|3|').toParseAs(grammar);
       expect('start = "abcd"|\n3|').toParseAs(grammar);
       expect('start = "abcd"|3\n|').toParseAs(grammar);
     });
 
     it("with delimiter", function() {
-      var grammar = rangeGrammar2(2, 3);
+      var grammar = rangeGrammar2(2, 3, true);
       expect('start = "abcd"|2..3,"efgh"|'  ).toParseAs(grammar);
       expect('start = "abcd"\n|2..3,"efgh"|').toParseAs(grammar);
       expect('start = "abcd"|\n2..3,"efgh"|').toParseAs(grammar);
@@ -341,7 +341,7 @@ describe("PEG.js grammar parser", function() {
       expect('start = "abcd"|2..3,\n"efgh"|').toParseAs(grammar);
       expect('start = "abcd"|2..3,"efgh"\n|').toParseAs(grammar);
 
-      grammar = rangeGrammar2(3, 3);
+      grammar = rangeGrammar2(3, 3, true);
       expect('start = "abcd"\n|3,"efgh"|').toParseAs(grammar);
       expect('start = "abcd"|\n3,"efgh"|').toParseAs(grammar);
       expect('start = "abcd"|3\n,"efgh"|').toParseAs(grammar);
@@ -353,17 +353,17 @@ describe("PEG.js grammar parser", function() {
   /* Canonical RangeOperator is "|2..3|". */
   describe("parses RangeOperator", function() {
     it("without delimiter", function() {
-      expect('start = "abcd"| .. |').toParseAs(rangeGrammar(0, null));
-      expect('start = "abcd"|0.. |').toParseAs(rangeGrammar(0, null));
-      expect('start = "abcd"|1.. |').toParseAs(rangeGrammar(1, null));
-      expect('start = "abcd"|2.. |').toParseAs(rangeGrammar(2, null));
+      expect('start = "abcd"| .. |').toParseAs(rangeGrammar(0, null, true));
+      expect('start = "abcd"|0.. |').toParseAs(rangeGrammar(0, null, true));
+      expect('start = "abcd"|1.. |').toParseAs(rangeGrammar(1, null, true));
+      expect('start = "abcd"|2.. |').toParseAs(rangeGrammar(2, null, true));
 
-      expect('start = "abcd"| ..1|').toParseAs(rangeGrammar(0, 1));
-      expect('start = "abcd"| ..2|').toParseAs(rangeGrammar(0, 2));
+      expect('start = "abcd"| ..1|').toParseAs(rangeGrammar(0, 1, true));
+      expect('start = "abcd"| ..2|').toParseAs(rangeGrammar(0, 2, true));
 
-      expect('start = "abcd"|2..2|').toParseAs(rangeGrammar(2, 2));
-      expect('start = "abcd"|2..3|').toParseAs(rangeGrammar(2, 3));
-      expect('start = "abcd"|3|').toParseAs(rangeGrammar(3, 3));
+      expect('start = "abcd"|2..2|').toParseAs(rangeGrammar(2, 2, true));
+      expect('start = "abcd"|2..3|').toParseAs(rangeGrammar(2, 3, true));
+      expect('start = "abcd"|3|').toParseAs(rangeGrammar(3, 3, true));
 
       expect('start = "abcd"| ..0|').toFailToParse();
       expect('start = "abcd"|0..0|').toFailToParse();
@@ -371,17 +371,17 @@ describe("PEG.js grammar parser", function() {
     });
 
     it("with delimiter", function() {
-      expect('start = "abcd"| .. , "efgh"|').toParseAs(rangeGrammar2(0, null));
-      expect('start = "abcd"|0.. , "efgh"|').toParseAs(rangeGrammar2(0, null));
-      expect('start = "abcd"|1.. , "efgh"|').toParseAs(rangeGrammar2(1, null));
-      expect('start = "abcd"|2.. , "efgh"|').toParseAs(rangeGrammar2(2, null));
+      expect('start = "abcd"| .. , "efgh"|').toParseAs(rangeGrammar2(0, null, true));
+      expect('start = "abcd"|0.. , "efgh"|').toParseAs(rangeGrammar2(0, null, true));
+      expect('start = "abcd"|1.. , "efgh"|').toParseAs(rangeGrammar2(1, null, true));
+      expect('start = "abcd"|2.. , "efgh"|').toParseAs(rangeGrammar2(2, null, true));
 
-      expect('start = "abcd"| ..1, "efgh"|').toParseAs(rangeGrammar2(0, 1));
-      expect('start = "abcd"| ..2, "efgh"|').toParseAs(rangeGrammar2(0, 2));
+      expect('start = "abcd"| ..1, "efgh"|').toParseAs(rangeGrammar2(0, 1, true));
+      expect('start = "abcd"| ..2, "efgh"|').toParseAs(rangeGrammar2(0, 2, true));
 
-      expect('start = "abcd"|2..2, "efgh"|').toParseAs(rangeGrammar2(2, 2));
-      expect('start = "abcd"|2..3, "efgh"|').toParseAs(rangeGrammar2(2, 3));
-      expect('start = "abcd"|3   , "efgh"|').toParseAs(rangeGrammar2(3, 3));
+      expect('start = "abcd"|2..2, "efgh"|').toParseAs(rangeGrammar2(2, 2, true));
+      expect('start = "abcd"|2..3, "efgh"|').toParseAs(rangeGrammar2(2, 3, true));
+      expect('start = "abcd"|3   , "efgh"|').toParseAs(rangeGrammar2(3, 3, true));
 
       expect('start = "abcd"| ..0, "efgh"|').toFailToParse();
       expect('start = "abcd"|0..0, "efgh"|').toFailToParse();

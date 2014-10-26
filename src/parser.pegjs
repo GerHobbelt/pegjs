@@ -162,7 +162,7 @@ RangeExpression
   = expression:PrimaryExpression __ operator:RangeOperator {
       var min = operator[0];
       var max = operator[1];
-      if (max === 0) {
+      if (max.constant && max.value === 0) {
         error("The maximum count of repetitions of the rule cann't be 0.");
       }
       return {
@@ -175,12 +175,20 @@ RangeExpression
     }
 
 RangeOperator
-  = "|" __ exact:Int __ delimiter:("," __ PrimaryExpression __)? "|" {
-      return [exact, exact, delimiter !== null ? delimiter[2] : null];
+  = "|" __ exact:RangeBoundary __ delimiter:("," __ PrimaryExpression __)? "|" {
+      return [exact, exact, extractOptional(delimiter, 2)];
     }
-  / "|" __ min:Int? __ ".." __ max:Int? __ delimiter:("," __ PrimaryExpression __)? "|" {
-      return [min !== null ? min : 0, max, delimiter !== null ? delimiter[2] : null];
+  / "|" __ min:RangeBoundary? __ ".." __ max:RangeBoundary? __ delimiter:("," __ PrimaryExpression __)? "|" {
+      return [
+        min !== null ? min : { constant: true, value: 0 },
+        max !== null ? max : { constant: true, value: null },
+        extractOptional(delimiter, 2)
+      ];
     }
+
+RangeBoundary
+  = value:Int { return { constant: true, value: value }; }
+  / value:Identifier { return { constant: false, value: value }; }
 
 PrimaryExpression
   = LiteralMatcher
