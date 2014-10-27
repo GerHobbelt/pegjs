@@ -585,7 +585,7 @@ describe("compiler pass |generateBytecode|", function() {
             14, 0, 2, 2, 18, 0, 19, 1,   //     <expression>
             12, 14,                      //     WHILE_NOT_ERROR
             6,                           //       * APPEND
-            33, 0, 1, 8,                 //         IF_GE_DYNAMIC <0>
+            33, 2, 1, 8,                 //         IF_GE_DYNAMIC <2>
             28,                          //           * PUSH_FAILED
             14, 0, 2, 2, 18, 0, 19, 1,   //           * <expression>
             2,                           //     POP
@@ -634,7 +634,7 @@ describe("compiler pass |generateBytecode|", function() {
             6,                           //       * APPEND
             14, 0, 2, 2, 18, 0, 19, 1,   //         <expression>
             2,                           //     POP
-            32, 0, 3, 1,                 //     IF_LT_DYNAMIC <0>
+            32, 2, 3, 1,                 //     IF_LT_DYNAMIC <2>
             2,                           //       * POP
             3,                           //         POP_CURR_POS
             28,                          //         PUSH_FAILED
@@ -690,11 +690,11 @@ describe("compiler pass |generateBytecode|", function() {
             14, 0, 2, 2, 18, 0, 19, 1,   //         <expression>
             12, 14,                      //         WHILE_NOT_ERROR
             6,                           //           * APPEND
-            33, 0, 1, 8,                 //             IF_GE_DYNAMIC <0>
+            33, 2, 1, 8,                 //             IF_GE_DYNAMIC <2>
             28,                          //               * PUSH_FAILED
             14, 0, 2, 2, 18, 0, 19, 1,   //               * <expression>
             2,                           //         POP
-            32, 1, 3, 1,                 //         IF_LT_DYNAMIC <1>
+            32, 3, 3, 1,                 //         IF_LT_DYNAMIC <3>
             2,                           //           * POP
             3,                           //             POP_CURR_POS
             28,                          //             PUSH_FAILED
@@ -745,11 +745,11 @@ describe("compiler pass |generateBytecode|", function() {
             14, 0, 2, 2, 18, 0, 19, 1,   //     <expression>
             12, 14,                      //     WHILE_NOT_ERROR
             6,                           //       * APPEND
-            33, 0, 1, 8,                 //         IF_GE_DYNAMIC <0>
+            33, 2, 1, 8,                 //         IF_GE_DYNAMIC <2>
             28,                          //           * PUSH_FAILED
             14, 0, 2, 2, 18, 0, 19, 1,   //           * <expression>
             2,                           //     POP
-            32, 0, 3, 1,                 //     IF_LT_DYNAMIC <0>
+            32, 2, 3, 1,                 //     IF_LT_DYNAMIC <2>
             2,                           //       * POP
             3,                           //         POP_CURR_POS
             28,                          //         PUSH_FAILED
