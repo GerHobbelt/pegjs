@@ -51,7 +51,9 @@ ways.
 ### Browser
 
 [Download](http://pegjs.majda.cz/#download) the PEG.js library (regular or
-minified version).
+minified version) or install it using Bower:
+
+    $ bower install pegjs
 
 Generating a Parser
 -------------------
@@ -456,18 +458,22 @@ Development
 -----------
 
   * [Project website](http://pegjs.majda.cz/)
-  * [Wiki](https://github.com/dmajda/pegjs/wiki)
-  * [Source code](https://github.com/dmajda/pegjs)
+  * [Wiki](https://github.com/pegjs/pegjs/wiki)
+  * [Source code](https://github.com/pegjs/pegjs)
   * [Trello board](https://trello.com/board/peg-js/50a8eba48cf95d4957006b01)
-  * [Issue tracker](https://github.com/dmajda/pegjs/issues)
+  * [Issue tracker](https://github.com/pegjs/pegjs/issues)
   * [Google Group](http://groups.google.com/group/pegjs)
   * [Twitter](http://twitter.com/peg_js)
 
 PEG.js is developed by [David Majda](http://majda.cz/)
-([@dmajda](http://twitter.com/dmajda)). You are welcome to contribute code.
-Unless your contribution is really trivial you should get in touch with me first
-— this can prevent wasted effort on both sides. You can send code both as a
-patch or a GitHub pull request.
+([@dmajda](http://twitter.com/dmajda)). The [Bower
+package](https://github.com/pegjs/bower) is maintained by [Michel
+Krämer](http://www.michel-kraemer.com/)
+([@michelkraemer](https://twitter.com/michelkraemer)).
+
+You are welcome to contribute code.  Unless your contribution is really trivial
+you should get in touch with me first — this can prevent wasted effort on both
+sides. You can send code both as a patch or a GitHub pull request.
 
 Note that PEG.js is still very much work in progress. There are no compatibility
 guarantees until version 1.0.
