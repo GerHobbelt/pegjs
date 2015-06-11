@@ -18,7 +18,9 @@ MODULES =                                           \
 		  compiler/passes/generate-bytecode         \
 		  compiler/passes/generate-javascript       \
 		  compiler/passes/remove-proxy-rules        \
+          compiler/passes/report-duplicate-labels   \
 		  compiler/passes/report-left-recursion     \
+          compiler/passes/report-duplicate-rules    \
 		  compiler/passes/report-missing-rules      \
 		  compiler/passes/report-unused-rules       \
 		  compiler/passes/report-redefined-rules    \

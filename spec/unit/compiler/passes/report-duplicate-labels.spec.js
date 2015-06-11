@@ -1,25 +1,22 @@
 describe("compiler pass |reportDuplicateLabels|", function() {
-  var pass = PEG.compiler.passes.check.reportDuplicateLabels;
-  var msg = 'Duplicate label "a" detected for rule "start".';
+  var pass = function ( ast ) {
+    return PEG.compiler.passes.check.reportDuplicateLabels(ast, { reportDuplicateLabels: true });
+  };
+  var details = { message:
+    'Duplicate label "a" detected for rule "start". ' +
+    'To disable this error, simply set the option "reportDuplicateLabels" to "false" or "0".'
+  };
 
   it("reports duplicate labels", function() {
-    expect(pass).toReportError("start = a:'some' a:'thing'", {
-      message: msg
-    });
+    expect(pass).toReportError("start = a:'some' a:'thing'", details);
   });
 
   it("reports duplicate labels inside expressions", function() {
-    expect(pass).toReportError("start = (a:'some')* a:'thing'", {
-      message: msg
-    });
+    expect(pass).toReportError("start = (a:'some')* a:'thing'", details);
 
-    expect(pass).toReportError("start = a:'some' / a:'thing'", {
-      message: msg
-    });
+    expect(pass).toReportError("start = a:'some' / a:'thing'", details);
 
-    expect(pass).toReportError("start = ('some' / a:'other')+ / a:'thing'", {
-      message: msg
-    });
+    expect(pass).toReportError("start = ('some' / a:'other')+ / a:'thing'", details);
   });
 
   it("allows unique labels", function() {
