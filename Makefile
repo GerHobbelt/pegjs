@@ -133,7 +133,7 @@ spec: parser
 	$(JASMINE_NODE) --verbose $(SPEC_DIR)
 
 # Run the benchmark suite
-all-benchmarks:								\
+benchmark-all:								\
 			benchmark 						\
 			benchmark-cache 				\
 			benchmark-locinfo 				\
