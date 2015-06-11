@@ -9,8 +9,10 @@
   "laxbreak": true,
   "loopfunc": true,
   "noarg":    true,
+  "node":     true,
   "noempty":  true,
   "nonew":    true,
   "trailing": true,
+  "undef":    true,
   "-W082":    false
 }
