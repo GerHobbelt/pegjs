@@ -45,7 +45,7 @@
   "bin":             "bin/pegjs",
   "license":         "MIT",
   "scripts":         {
-    "test": "make spec"
+    "test": "make hint && make spec"
   },
   "repository":      {
     "type": "git",
