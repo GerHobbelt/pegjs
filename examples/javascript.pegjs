@@ -956,7 +956,9 @@ ConditionalExpressionNoIn
     }
 
 AssignmentExpression
-  = left:LeftHandSideExpression __ !Operator !UnaryOperator
+  = left:(exp:LeftHandSideExpression !( __ Operator) !( __ UnaryOperator){
+      return exp;
+    })
     rest: ( __ operator:AssignmentOperator __
       right:AssignmentExpression
       {
@@ -980,7 +982,9 @@ AssignmentExpression
   / ConditionalExpression
 
 AssignmentExpressionNoIn
-  = left:LeftHandSideExpression __ !Operator !UnaryOperator
+  = left:(exp:LeftHandSideExpression !( __ Operator) !( __ UnaryOperator){
+      return exp;
+    })
     rest: ( __ operator:AssignmentOperator __
       right:AssignmentExpressionNoIn
       {
