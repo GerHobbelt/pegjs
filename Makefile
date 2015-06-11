@@ -11,18 +11,19 @@ MODULES =                                           \
 		  utils/classes                             \
 		  grammar-error                             \
 		  parser                                    \
-		  compiler/asts                             \
 		  compiler/visitor                          \
+          compiler/asts                             \
 		  compiler/opcodes                          \
 		  compiler/javascript                       \
 		  compiler/passes/generate-bytecode         \
 		  compiler/passes/generate-javascript       \
 		  compiler/passes/remove-proxy-rules        \
-          compiler/passes/report-duplicate-labels   \
 		  compiler/passes/report-left-recursion     \
-          compiler/passes/report-duplicate-rules    \
+          compiler/passes/report-infinite-loops     \
 		  compiler/passes/report-missing-rules      \
 		  compiler/passes/report-unused-rules       \
+          compiler/passes/report-duplicate-labels   \
+          compiler/passes/report-duplicate-rules    \
 		  compiler/passes/report-redefined-rules    \
 		  compiler/passes/propagate-descriptions    \
 		  compiler/passes/patch-ast-graph           \
@@ -111,7 +112,7 @@ browser: parser
 
 	for module in $(MODULES); do                                                                \
 	  echo "  modules.define(\"$$module\", function(module, require) {" >> $(BROWSER_FILE_DEV); \
-	  sed -e 's/^/    /' lib/$$module.js                                >> $(BROWSER_FILE_DEV); \
+	  sed -e 's/^\(..*\)$$/    \1/' lib/$$module.js                     >> $(BROWSER_FILE_DEV); \
 	  echo '  });'                                                      >> $(BROWSER_FILE_DEV); \
 	  echo ''                                                           >> $(BROWSER_FILE_DEV); \
 	done

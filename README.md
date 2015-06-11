@@ -93,6 +93,7 @@ You can tweak the generated parser with several options:
     `PEG.buildParser`
   * `--extra-options-file` — file with additional options (in JSON format) to
     pass to `PEG.buildParser`
+  * `--trace` — makes the parser trace its progress
 
 ### JavaScript API
 
@@ -142,9 +143,10 @@ the input is invalid. The exception will contain `offset`, `line`, `column`,
     parser.parse("abcd"); // throws an exception
 
 You can tweak parser behavior by passing a second parameter with an options
-object to the `parse` method. Two options are currently supported:
+object to the `parse` method. The following options are supported:
 
   * `startRule` — name of the rule to start parsing from
+  * `tracer` — tracer to use
   * `startOffset` — start parsing the input at this position
 
 Parsers can also support their own custom options.

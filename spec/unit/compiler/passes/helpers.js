@@ -97,8 +97,8 @@ jasmine.Expectation.addMatchers({
             for (key in details) {
               if (details.hasOwnProperty(key)) {
                 if (!this.env.equals_(e[key], details[key])) {
-                  message = "Expected the pass to report an error"
-                         + (details ? " with details " + jasmine.pp(details) : "") + ", "
+                  message = "Expected the pass to report an error "
+                         + (details ? "with details " + jasmine.pp(details) + " " : "")
                          + "for grammar " + jasmine.pp(grammar) + ", "
                          + "but " + jasmine.pp(key) + " "
                          + "is " + jasmine.pp(e[key]) + ".";
@@ -201,8 +201,9 @@ jasmine.Expectation.addMatchers({
                     this.message = function() {
                       return "Expected " + jasmine.pp(input) + " "
                            + "with options " + jasmine.pp(options) + " "
-                           + "to fail to parse"
-                           + (details ? " with details " + jasmine.pp(details) : "") + ", "
+                           + "to report an error"
+                           + (details ? " with details " + jasmine.pp(details) + " " : "")
+                           + "for grammar " + jasmine.pp(grammar) + ", "
                            + "but " + jasmine.pp(key) + " "
                            + "is " + jasmine.pp(e[key]) + ".";
                     };

@@ -68,6 +68,7 @@ describe("plugin API", function() {
                     '    rules: [',
                     '      {',
                     '        type:       "rule",',
+                    '        name:       "start",',
                     '        expression: { type: "literal",  value: text(), ignoreCase: false }',
                     '      }',
                     '    ]',
