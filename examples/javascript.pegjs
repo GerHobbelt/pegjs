@@ -980,15 +980,25 @@ AssignmentExpression
   / ConditionalExpression
 
 AssignmentExpressionNoIn
-  = left:LeftHandSideExpression __
-    operator:AssignmentOperator __
-    right:AssignmentExpressionNoIn
+  = left:LeftHandSideExpression __ !Operator !UnaryOperator
+    rest: ( __ operator:AssignmentOperator __
+      right:AssignmentExpressionNoIn
+      {
+        return {
+          operator: operator,
+          right:    right
+        }
+      }
+    )?
     {
+      if (!rest){
+        return left;
+      };
       return {
         type:     "AssignmentExpression",
-        operator: operator,
+        operator: rest.operator,
         left:     left,
-        right:    right
+        right:    rest.right
       };
     }
   / ConditionalExpressionNoIn
