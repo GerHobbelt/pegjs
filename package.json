@@ -52,8 +52,8 @@
   },
   "devDependencies": {
     "jasmine-node": ">=1.14.5",
-    "uglify-js": ">=2.4.23",
-    "jshint": ">=2.8.0"
+    "uglify-js":    ">=2.4.23",
+    "jshint":       ">=2.8.0"
   },
   "engines":         {
     "node": ">= 0.10.0"

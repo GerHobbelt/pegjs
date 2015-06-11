@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-var util = require("util");
 var fs   = require("fs");
 var PEG  = require("../lib/peg");
 var statistics = require("../lib/statistics");
@@ -38,8 +37,8 @@ function center(text, length) {
 }
 
 function writeTableHeader() {
-  util.puts("┌─────────────────────────────────────┬───────────┬────────────┬──────────────┐");
-  util.puts("│                Test                 │ Inp. size │ Avg. time  │  Avg. speed  │");
+  console.log("┌─────────────────────────────────────┬───────────┬────────────┬──────────────┐");
+  console.log("│                Test                 │ Inp. size │ Avg. time  │  Avg. speed  │");
 }
 
 function writeHeading(heading, options) {
@@ -56,16 +55,16 @@ function writeHeading(heading, options) {
   extra = extra.join(" +");
   heading += extra;
 
-  util.puts("├─────────────────────────────────────┴───────────┴────────────┴──────────────┤");
-  util.puts("│ " + center(heading, 75) + " │");
-  util.puts("├─────────────────────────────────────┬───────────┬────────────┬──────────────┤");
+  console.log("├─────────────────────────────────────┴───────────┴────────────┴──────────────┤");
+  console.log("│ " + center(heading, 75) + " │");
+  console.log("├─────────────────────────────────────┬───────────┬────────────┬──────────────┤");
 }
 
 function writeResult(title, inputSize, parseTime) {
   var KB      = 1024;
   var MS_IN_S = 1000;
 
-  util.puts("│ "
+  console.log("│ "
     + padRight(title, 35)
     + " │ "
     + padLeft((inputSize / KB).toFixed(2), 6)
@@ -78,42 +77,42 @@ function writeResult(title, inputSize, parseTime) {
 }
 
 function writeSeparator() {
-  util.puts("├─────────────────────────────────────┼───────────┼────────────┼──────────────┤");
+  console.log("├─────────────────────────────────────┼───────────┼────────────┼──────────────┤");
 }
 
 function writeTableFooter() {
-  util.puts("└─────────────────────────────────────┴───────────┴────────────┴──────────────┘");
+  console.log("└─────────────────────────────────────┴───────────┴────────────┴──────────────┘");
 }
 
 /* Helpers */
 
 function printHelp() {
-  util.puts("Usage: run [options] [<benchmarks_file>]");
-  util.puts("");
-  util.puts("Runs PEG.js benchmark suite.");
-  util.puts("");
-  util.puts("You may pass an optional JSON benchmarks definition list file");
-  util.puts("which will be used instead of the internal default benchmark");
-  util.puts("set.");
-  util.puts("");
-  util.puts("Options:");
-  util.puts("  -n, --run-count <n>          number of runs (default: 10)");
-  util.puts("      --cache                  make tested parsers cache results");
-  util.puts("      --includeRegionInfo      make tested parsers add region info to each AST node");
-  util.puts("      --statistics             make tested parsers collect run-time statistics");
-  util.puts("  -o, --optimize <goal>        select optimization for speed or size (default:");
-  util.puts("                               speed)");
-  util.puts("      --plugin <plugin>        use a specified plugin (can be specified");
-  util.puts("                               multiple times)");
-  util.puts("      --extra-options <options>");
-  util.puts("                               additional options (in JSON format) to pass");
-  util.puts("                               to PEG.buildParser");
-  util.puts("      --extra-options-file <file>");
-  util.puts("                               file with additional options (in JSON");
-  util.puts("                               format) to pass to PEG.buildParser");
-  util.puts("      --verbose                verbose output, including parser diagnostics");
-  util.puts("  -v, --version                print version information and exit");
-  util.puts("  -h, --help                   print help and exit");
+  console.log("Usage: run [options] [<benchmarks_file>]");
+  console.log("");
+  console.log("Runs PEG.js benchmark suite.");
+  console.log("");
+  console.log("You may pass an optional JSON benchmarks definition list file");
+  console.log("which will be used instead of the internal default benchmark");
+  console.log("set.");
+  console.log("");
+  console.log("Options:");
+  console.log("  -n, --run-count <n>          number of runs (default: 10)");
+  console.log("      --cache                  make tested parsers cache results");
+  console.log("      --includeRegionInfo      make tested parsers add region info to each AST node");
+  console.log("      --statistics             make tested parsers collect run-time statistics");
+  console.log("  -o, --optimize <goal>        select optimization for speed or size (default:");
+  console.log("                               speed)");
+  console.log("      --plugin <plugin>        use a specified plugin (can be specified");
+  console.log("                               multiple times)");
+  console.log("      --extra-options <options>");
+  console.log("                               additional options (in JSON format) to pass");
+  console.log("                               to PEG.buildParser");
+  console.log("      --extra-options-file <file>");
+  console.log("                               file with additional options (in JSON");
+  console.log("                               format) to pass to PEG.buildParser");
+  console.log("      --verbose                verbose output, including parser diagnostics");
+  console.log("  -v, --version                print version information and exit");
+  console.log("  -h, --help                   print help and exit");
 }
 
 function exitSuccess() {
@@ -125,9 +124,9 @@ function exitFailure() {
 }
 
 function abort(message, ex) {
-  util.error(message);
+  console.error(message);
   if (options.verboseOutput && ex && ex.stack) {
-    console.log("Stacktrace:\n", ex.stack);
+    console.error("Stacktrace:\n", ex.stack);
   }
   exitFailure();
 }
@@ -328,7 +327,7 @@ Runner.run(benchmarks, {
         errPreMsg = ex.name + ": ";
       }
       var msg = errPreMsg + errMsg + locInfo;
-      util.puts(msg.trim() + "\n");
+      console.log(msg.trim() + "\n");
     }
     writeResult(title, inputSize, parseTime);
   },
