@@ -15,8 +15,8 @@ Features
   * Based on [parsing expression
     grammar](http://en.wikipedia.org/wiki/Parsing_expression_grammar) formalism
     — more powerful than traditional LL(*k*) and LR(*k*) parsers
-  * Usable [from your browser](http://pegjs.majda.cz/online), from the command
-    line, or via JavaScript API
+  * Usable [from your browser](http://pegjs.org/online), from the command line,
+    or via JavaScript API
 
 Clone Info
 ----------
@@ -28,7 +28,7 @@ This [clone](https://github.com/GerHobbelt/pegjs) contains the work done by
 Getting Started
 ---------------
 
-[Online version](http://pegjs.majda.cz/online) is the easiest way to generate a
+[Online version](http://pegjs.org/online) is the easiest way to generate a
 parser. Just enter your grammar, try parsing few inputs, and download generated
 parser code.
 
@@ -50,8 +50,8 @@ ways.
 
 ### Browser
 
-[Download](http://pegjs.majda.cz/#download) the PEG.js library (regular or
-minified version) or install it using Bower:
+[Download](http://pegjs.org/#download) the PEG.js library (regular or minified
+version) or install it using Bower:
 
     $ bower install pegjs
 
@@ -73,7 +73,7 @@ file but with “.js” extension. You can also specify the output file explicit
 
     $ pegjs arithmetics.pegjs arithmetics-parser.js
 
-If you omit both input and ouptut file, standard input and output are used.
+If you omit both input and output file, standard input and output are used.
 
 By default, the parser object is assigned to `module.exports`, which makes the
 output a Node.js module. You can assign it to another variable by passing a
@@ -457,7 +457,7 @@ environments:
 Development
 -----------
 
-  * [Project website](http://pegjs.majda.cz/)
+  * [Project website](http://pegjs.org/)
   * [Wiki](https://github.com/pegjs/pegjs/wiki)
   * [Source code](https://github.com/pegjs/pegjs)
   * [Trello board](https://trello.com/board/peg-js/50a8eba48cf95d4957006b01)

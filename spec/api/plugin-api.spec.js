@@ -15,7 +15,7 @@ describe("plugin API", function() {
       expect(pluginsUsed).toEqual([true, true, true]);
     });
 
-    it("receives the configuration", function() {
+    it("receives configuration", function() {
       var plugin = {
             use: function(config, options) {
               var i;
@@ -47,7 +47,7 @@ describe("plugin API", function() {
       PEG.buildParser(grammar, { plugins: [plugin] });
     });
 
-    it("receives the options", function() {
+    it("receives options", function() {
       var buildParserOptions = { foo: 42 },
           plugin             = {
             use: function(config, options) {
@@ -58,7 +58,7 @@ describe("plugin API", function() {
       PEG.buildParser(grammar, buildParserOptions);
     });
 
-    it("can replace the parser", function() {
+    it("can replace parser", function() {
       var plugin = {
             use: function(config, options) {
               var parser = PEG.buildParser([
@@ -98,7 +98,7 @@ describe("plugin API", function() {
       expect(parser.parse("a")).toBe(42);
     });
 
-    it("can change the options", function() {
+    it("can change options", function() {
       var grammar = [
             'a = "x"',
             'b = "x"',
