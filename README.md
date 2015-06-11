@@ -135,8 +135,8 @@ Using the Parser
 Using the generated parser is simple — just call its `parse` method and pass an
 input string as a parameter. The method will return a parse result (the exact
 value depends on the grammar used to build the parser) or throw an exception if
-the input is invalid. The exception will contain `offset`, `line`, `column`,
-`expected`, `found` and `message` properties with more details about the error.
+the input is invalid. The exception will contain `location`, `expected`, `found`
+and `message` properties with more details about the error.
 
     parser.parse("abba"); // returns ["a", "b", "b", "a"]
 
@@ -350,10 +350,17 @@ otherwise consider the match failed.
 The code inside the predicate can access all variables and functions defined in
 the initializer at the beginning of the grammar.
 
-The code inside the predicate can also access the current parse position using
-the `offset` function. It returns a zero-based character index into the input
-string. The code can also access the current line and column using the `line`
-and `column` functions. Both return one-based indexes.
+The code inside the predicate can also access location information using the
+`location` function. It returns an object like this:
+
+    {
+      start: { offset: 23, line: 5, column: 6 },
+      end:   { offset: 23, line: 5, column: 6 }
+    }
+
+The `start` and `end` properties both refer to the current parse position. The
+`offset` property contains an offset as a zero-based index and `line` and
+`column` properties contain a line and a column as one-based indices.
 
 The code inside the predicate can also access the parser object using the
 `parser` variable and options passed to the parser using the `options` variable.
@@ -372,10 +379,17 @@ otherwise consider the match failed.
 The code inside the predicate can access all variables and functions defined in
 the initializer at the beginning of the grammar.
 
-The code inside the predicate can also access the current parse position using
-the `offset` function. It returns a zero-based character index into the input
-string. The code can also access the current line and column using the `line`
-and `column` functions. Both return one-based indexes.
+The code inside the predicate can also access location information using the
+`location` function. It returns an object like this:
+
+    {
+      start: { offset: 23, line: 5, column: 6 },
+      end:   { offset: 23, line: 5, column: 6 }
+    }
+
+The `start` and `end` properties both refer to the current parse position. The
+`offset` property contains an offset as a zero-based index and `line` and
+`column` properties contain a line and a column as one-based indices.
 
 The code inside the predicate can also access the parser object using the
 `parser` variable and options passed to the parser using the `options` variable.
@@ -426,11 +440,19 @@ must be balanced.
 The code inside the action can also access the string matched by the expression
 using the `text` function.
 
-The code inside the action can also access the parse position at the beginning
-of the action's expression using the `offset` function. It returns a zero-based
-character index into the input string. The code can also access the line and
-column at the beginning of the action's expression using the `line` and `column`
-functions. Both return one-based indexes.
+
+The code inside the action can also access location information using the
+`location` function. It returns an object like this:
+
+    {
+      start: { offset: 23, line: 5, column: 6 },
+      end:   { offset: 25, line: 5, column: 8 }
+    }
+
+The `start` property refers to the position at the beginning of the expression,
+the `end` property refers to position after the end of the expression. The
+`offset` property contains an offset as a zero-based index and `line` and
+`column` properties contain a line and a column as one-based indices.
 
 The code inside the action can also access the parser object using the `parser`
 variable and options passed to the parser using the `options` variable.

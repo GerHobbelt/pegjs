@@ -99,18 +99,18 @@ Grammar
       return {
         type:        "grammar",
         options:     options,
-        region:      options.includeRegionInfo ? region() : false,
         initializer: extractOptional(initializer, 0),
-        rules:       extractList(rules, 0)
+        rules:       extractList(rules, 0),
+        location:    location()
       };
     }
 
 Initializer
   = code:CodeBlock EOS {
       return {
-        type:   "initializer",
-        region: options.includeRegionInfo ? region() : false,
-        code:   code
+        type:     "initializer",
+        code:     code,
+        location: location()
       };
     }
 
@@ -123,18 +123,18 @@ Rule
     expression:Expression EOS {
       return {
         type:        "rule",
-        region:      options.includeRegionInfo ? region() : false,
         name:        name,
         rawText:     text(),
         annotations: mergeArrays(a1, a2, extractOptional(displayName, 2)),
         expression:  displayName !== null
           ? {
               type:       "named",
-              region:     options.includeRegionInfo ? region() : false,
               name:       displayName[0],
-              expression: expression
+              expression: expression,
+              location:   location()
             }
-          : expression
+          : expression,
+        location:    location()
       };
     }
 
@@ -147,10 +147,10 @@ Annotations
 Annotation
   = "@" __ name:AnnotationKeyword __ params:Params? {
       return {
-        type: "annotation",
-        name: name,
-        region: options.includeRegionInfo ? region() : false,
-        params: params === null ? [] : params
+        type:     "annotation",
+        name:     name,
+        params:   (params === null ? [] : params),
+        location: location()
       };
     };
 
@@ -163,29 +163,29 @@ Param
   = k:ParamKeyword __ {
       return {
         type: "param_keyword",
-        region: options.includeRegionInfo ? region() : false,
-        value: k
+        value: k,
+        location: location()
       };
     }
   / str:StringLiteral __ {
       return {
         type: "param_string",
-        region: options.includeRegionInfo ? region() : false,
-        value: str
+        value: str,
+        location: location()
       };
     }
   / n:Int __ {
       return {
         type: "param_number",
-        region: options.includeRegionInfo ? region() : false,
-        value: n
+        value: n,
+        location: location()
       };
     }
   / r:Range2 __ {
       return {
         type: "param_range",
-        region: options.includeRegionInfo ? region() : false,
-        value: r
+        value: r,
+        location: location()
       };
     }
   / annotation:Annotation {
@@ -241,8 +241,8 @@ ChoiceExpression
       return rest.length > 0
         ? {
           type: "choice",
-          region: options.includeRegionInfo ? region() : false,
-          alternatives: buildList(first, rest, 3)
+          alternatives: buildList(first, rest, 3),
+          location: location()
         }
         : first;
     };
@@ -252,10 +252,10 @@ ActionExpression
       if (code !== null) {
         return {
           type: "action",
-          region: options.includeRegionInfo ? region() : false,
           annotations: annotations,
           expression: expression,
-          code: code[1]
+          code: code[1],
+          location: location()
         };
       } else {
         expression.annotations = mergeArrays(expression.annotations, annotations);
@@ -268,8 +268,8 @@ SequenceExpression
       return rest.length > 0
         ? {
           type: "sequence",
-          region: options.includeRegionInfo ? region() : false,
-          elements: buildList(first, rest, 1)
+          elements: buildList(first, rest, 1),
+          location: location()
         }
         : first;
     };
@@ -279,10 +279,10 @@ LabeledExpression
       if (label !== null) {
         return {
           type: "labeled",
-          region: options.includeRegionInfo ? region() : false,
           label: extractOptional(label, 0),
           annotations: annotations,
-          expression: expression
+          expression: expression,
+          location: location()
         };
       } else {
         expression.annotations = mergeArrays(expression.annotations, annotations);
@@ -295,8 +295,8 @@ PrefixedExpression
   = operator:PrefixedOperator __ expression:SuffixedExpression {
       return {
         type: OPS_TO_PREFIXED_TYPES[operator],
-        region: options.includeRegionInfo ? region() : false,
-        expression: expression
+        expression: expression,
+        location: location()
       };
     }
   / SuffixedExpression
@@ -310,18 +310,18 @@ SuffixedExpression
   = expression:PrimaryExpression __ operator:SuffixedOperator {
       return {
         type: OPS_TO_SUFFIXED_TYPES[operator],
-        region: options.includeRegionInfo ? region() : false,
-        expression: expression
+        expression: expression,
+        location: location()
       };
     }
   / expression:PrimaryExpression __ range:Range {
       return {
         type:       "range",
-        region:     options.includeRegionInfo ? region() : false,
         min:        range.min,
         max:        range.max,
         expression: expression,
-        delimiter:  range.delimiter
+        delimiter:  range.delimiter,
+        location: location()
       };
     }
   / PrimaryExpression
@@ -347,9 +347,9 @@ PrimaryExpression
     %} {
       return {
         type: "literal",
-        region: options.includeRegionInfo ? region() : false,
         value: "fake",
-        ignoreCase: false
+        ignoreCase: false,
+        location: location()
       };
     }
 
@@ -357,8 +357,8 @@ RuleReferenceExpression
   = name:Identifier !(__ Annotations displayName:(StringLiteral __ Annotations)? "=") {
       return {
         type: "rule_ref",
-        region: options.includeRegionInfo ? region() : false,
-        name: name
+        name: name,
+        location: location()
       };
     };
 
@@ -366,8 +366,8 @@ SemanticPredicateExpression
   = operator:SemanticPredicateOperator __ code:CodeBlock {
       return {
         type: OPS_TO_SEMANTIC_PREDICATE_TYPES[operator],
-        region: options.includeRegionInfo ? region() : false,
-        code: code
+        code: code,
+        location: location()
       };
     };
 
@@ -513,9 +513,9 @@ LiteralMatcher "literal"
   = value:StringLiteral ignoreCase:"i"? {
       return {
         type: "literal",
-        region: options.includeRegionInfo ? region() : false,
         value: value,
-        ignoreCase: ignoreCase !== null
+        ignoreCase: ignoreCase !== null,
+        location: location()
       };
     };
 
@@ -539,7 +539,7 @@ EpsilonMatcher "epsilon"
   = EpsilonKeywords __ {
       return {
         type: "epsilon",
-        region: options.includeRegionInfo ? region() : false
+        location: location()
       };
     }
 
@@ -556,11 +556,11 @@ CharacterClassMatcher "character class"
     {
       return {
         type:       "class",
-        region:     options.includeRegionInfo ? region() : false,
         parts:      filterEmptyStrings(parts),
         inverted:   inverted !== null,
         ignoreCase: ignoreCase !== null,
-        rawText:    text()
+        rawText:    text(),
+        location:   location()
       };
     }
 
@@ -646,12 +646,12 @@ HexDigit
 RegexMatcher "regular expression"
   = value:RegexLiteral flags:RegexFlags* {
       return {
-        type: "regex",
-        region: options.includeRegionInfo ? region() : false,
-        value: value,
+        type:       "regex",
+        value:      value,
         ignoreCase: flags.indexOf("i") !== -1,
-        multiLine: flags.indexOf("m") !== -1,
-        rawText:    text()
+        multiLine:  flags.indexOf("m") !== -1,
+        rawText:    text(),
+        location:   location()
       };
     };
 
@@ -672,7 +672,7 @@ AnyMatcher
   = "." {
     return {
       type:   "any",
-      region: options.includeRegionInfo ? region() : false
+      location: location()
     };
   }
 
@@ -680,8 +680,8 @@ CustomCodeExpression "custom parsing code block"
   = "%{" code:CustomParseCode "%}" { 
       return {
         type: "code",
-        region: options.includeRegionInfo ? region() : false,
-        code: code
+        code: code,
+        location: location()
       };
     }
 
