@@ -51,11 +51,21 @@ describe("PEG.js grammar parser", function() {
       ruleB             = { type: "rule",        name: "b",          annotations: [], expression: literalEfgh },
       ruleC             = { type: "rule",        name: "c",          annotations: [], expression: literalIjkl },
       ruleStart         = { type: "rule",        name: "start",      annotations: [], expression: literalAbcd },
-      initializer       = { type: "initializer", code: " code " };
+      initializer       = { type: "initializer", code: " code " },
+      options           = {
+        nil: null,
+        string: "string",
+        integer: -1,
+        float: -1.1,
+        boolean: true,
+        object: { key: "value" },
+        array: [0, "string", -1, -1.1, true, { key: "value" }]
+      };
 
   function oneRuleGrammar(expression) {
     return {
       type:        "grammar",
+      options:     {},
       initializer: null,
       rules:       [
         {
@@ -129,6 +139,7 @@ describe("PEG.js grammar parser", function() {
   var trivialGrammar = literalGrammar("abcd", false),
       twoRuleGrammar = {
         type:        "grammar",
+        options:     {},
         initializer: null,
         rules:       [ruleA, ruleB]
       };
@@ -279,24 +290,45 @@ describe("PEG.js grammar parser", function() {
   it("parses Grammar", function() {
     expect('\na = "abcd";\n').toParseAs(
       {
-        type:  "grammar",
+        type: "grammar",
+        options: {},
         initializer: null,
         rules: [ruleA]
       }
     );
     expect('\na = "abcd";\nb = "efgh";\nc = "ijkl";\n').toParseAs(
       {
-        type:  "grammar",
+        type: "grammar",
+        options: {},
         initializer: null,
         rules: [ruleA, ruleB, ruleC]
       }
     );
     expect('\n{ code };\na = "abcd";\n').toParseAs(
       {
-        type:  "grammar",
+        type: "grammar",
+        options: {},
         initializer: initializer,
         rules: [ruleA]
       }
+    );
+  });
+
+  /* Canonical Options is "{\"nil":null,"string":"string","integer":-1,"float":-1.1,"boolean":true,"object":{"key":"value"},"array":[0,"string",-1,-1.1,true,{"key":"value"}]}". */
+  it("parses Initializer", function() {
+    var optionsString1 = [
+      "// -*- nil: null; -*-",
+      "// -*- string: \"string\"; -*-",
+      "// -*- integer: -1; -*-",
+      "// -*- float: -1.1; -*-",
+      "// -*- boolean: true; -*-"
+    ].join("\n"),
+      optionsString2 = [
+      "// -*- object: {\"key\": \"value\" }; -*-",
+      "// -*- array: [0, \"string\", -1, -1.1, true, { \"key\": \"value\" }]; -*-"
+    ].join("\n");
+    expect(optionsString1 + '\nstart = "abcd"\n' + optionsString2).toParseAs(
+      { type:  "grammar", options: options,  initializer: null, rules: [ruleStart] }
     );
   });
 
@@ -304,7 +336,8 @@ describe("PEG.js grammar parser", function() {
   it("parses Initializer", function() {
     expect('{ code };start = "abcd"').toParseAs(
       {
-        type:  "grammar",
+        type: "grammar",
+        options: {},
         initializer: initializer,
         rules: [ruleStart]
       }
