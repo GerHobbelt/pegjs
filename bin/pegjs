@@ -28,7 +28,7 @@ function printHelp() {
   console.log("  -w, --watch                        watching a file, rebuild while modified.");
   console.log("  -e, --export-var <variable>        name of the variable where the parser");
   console.log("                                     object will be stored (default:");
-  console.log("                                     \"module.exports\")");
+  console.log("                                     \"PEG\")");
   console.log("      --cache                        make generated parser cache results");
   console.log("      --allowed-start-rules <rules>  comma-separated list of rules the generated");
   console.log("                                     parser will be allowed to start parsing");
@@ -298,8 +298,8 @@ function stream(inputStream, outputStream) {
     try {
       source = PEG.buildParser(input, options);
     } catch (e) {
-    if (e.location !== undefined) {
-      abort(e.location.start.line + ":" + e.location.start.column + ": " + e.message, e);
+      if (e.location !== undefined) {
+        abort(e.location.start.line + ":" + e.location.start.column + ": " + e.message, e);
       } else {
         abort(e.message, e);
       }
