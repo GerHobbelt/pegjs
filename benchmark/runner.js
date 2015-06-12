@@ -1,3 +1,4 @@
+/* global PEG */
 "use strict";
 
 ;(function(root, factory) {
@@ -6,7 +7,7 @@
   } else {
     root.Runner = factory(root.PEG);
   }
-}(this, function(PEG) {
+}(this, function(PEG) {  // jshint ignore:line
 
   return {
   run: function(benchmarks, runnerOptions, options, callbacks) {

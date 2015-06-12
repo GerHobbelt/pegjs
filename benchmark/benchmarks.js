@@ -6,7 +6,7 @@
   } else {
     root.benchmarks = factory();
   }
-}(this, function() {
+}(this, function() {  // jshint ignore:line
 
   return [
     {
