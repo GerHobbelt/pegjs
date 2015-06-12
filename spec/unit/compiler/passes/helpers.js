@@ -1,7 +1,15 @@
 /* global jasmine, PEG, beforeEach */
 "use strict";
 
-jasmine.Expectation.addMatchers({
+// Usage:
+// 
+//     describe("bla bla", function() {
+//       beforeEach(function() {
+//         this.addMatchers(require("spec/unit/compiler/passes/helpers.js"));
+//       });
+//       ...
+//     });
+module.exports = {
   toChangeAST: function() {
     return {
       compare: function(grammar) {
@@ -265,4 +273,5 @@ jasmine.Expectation.addMatchers({
       }
     };
   }
-});
+};
+

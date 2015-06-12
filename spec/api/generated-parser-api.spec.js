@@ -2,12 +2,16 @@
 "use strict";
 
 describe("generated parser API", function() {
+  beforeEach(function() {
+    this.addMatchers(require("./helpers.js"));
+  });
+
   describe("parse", function() {
     var grammar = [
-      'a = "x" { return "a"; }',
-      'b = "x" { return "b"; }',
-      'c = "x" { return "c"; }'
-    ].join("\n"),
+          'a = "x" { return "a"; }',
+          'b = "x" { return "b"; }',
+          'c = "x" { return "c"; }'
+        ].join("\n"),
         parser = PEG.buildParser(grammar, { allowedStartRules: ["b", "c"] }),
         parserAll = PEG.buildParser(grammar, { allowedStartRules: "*" });
 

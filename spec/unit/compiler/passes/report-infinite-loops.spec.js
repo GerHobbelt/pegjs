@@ -4,6 +4,10 @@
 describe("compiler pass |reportLeftRecursion|", function() {
   var pass = PEG.compiler.passes.check.reportInfiniteLoops;
 
+  beforeEach(function() {
+    this.addMatchers(require("./helpers.js"));
+  });
+
   it("reports infinite loops for zero_or_more", function() {
     expect(pass).toReportError('start = ("")*', {
       message:  "Infinite loop detected.",

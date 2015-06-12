@@ -1,3 +1,6 @@
+/* global expect, it, PEG, describe */
+"use strict";
+
 describe("compiler pass |reportDuplicateLabels|", function() {
   var pass = function ( ast ) {
     return PEG.compiler.passes.check.reportDuplicateLabels(ast, { reportDuplicateLabels: true });
@@ -6,6 +9,10 @@ describe("compiler pass |reportDuplicateLabels|", function() {
     'Duplicate label "a" detected for rule "start". ' +
     'To disable this error, simply set the option "reportDuplicateLabels" to "false" or "0".'
   };
+
+  beforeEach(function() {
+    this.addMatchers(require("./helpers.js"));
+  });
 
   it("reports duplicate labels", function() {
     expect(pass).toReportError("start = a:'some' a:'thing'", details);

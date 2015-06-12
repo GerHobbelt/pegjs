@@ -1,3 +1,6 @@
+/* global expect, it, PEG, describe */
+"use strict";
+
 describe("compiler pass |reportDuplicateRules|", function() {
   var pass = function ( ast ) {
     return PEG.compiler.passes.check.reportDuplicateRules(ast, { reportDuplicateRules: true });
@@ -6,6 +9,10 @@ describe("compiler pass |reportDuplicateRules|", function() {
     'Duplicate rule "start" detected in grammer. ' +
     'To disable this error, simply set the option "reportDuplicateRules" to "false" or "0".'
   };
+
+  beforeEach(function() {
+    this.addMatchers(require("./helpers.js"));
+  });
 
   it("reports duplicate rules", function(){
     expect(pass).toReportError([

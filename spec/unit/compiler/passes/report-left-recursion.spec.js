@@ -4,6 +4,10 @@
 describe("compiler pass |reportLeftRecursion|", function() {
   var pass = PEG.compiler.passes.check.reportLeftRecursion;
 
+  beforeEach(function() {
+    this.addMatchers(require("./helpers.js"));
+  });
+
   it("reports direct left recursion", function() {
     expect(pass).toReportError('start = start', {
       message:  'Left recursion detected for rule \"start\".',

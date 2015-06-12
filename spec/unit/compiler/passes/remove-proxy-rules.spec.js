@@ -4,6 +4,10 @@
 describe("compiler pass |removeProxyRules|", function() {
   var pass = PEG.compiler.passes.transform.removeProxyRules;
 
+  beforeEach(function() {
+    this.addMatchers(require("./helpers.js"));
+  });
+
   describe("when a proxy rule isn't listed in |allowedStartRules|", function() {
     it("updates references and removes it", function() {
       expect(pass).toChangeAST(

@@ -160,6 +160,7 @@ describe("PEG.js grammar parser", function() {
 
     function stripExpression(node) {
       delete node.location;
+      delete node.rawText;
 
       strip(node.expression);
     }
@@ -198,6 +199,7 @@ describe("PEG.js grammar parser", function() {
       action:       stripExpression,
       sequence:     stripChildren("elements"),
       labeled:      stripExpression,
+      unlabeled:    stripExpression,
       text:         stripExpression,
       simple_and:   stripExpression,
       simple_not:   stripExpression,
@@ -217,7 +219,7 @@ describe("PEG.js grammar parser", function() {
 
   beforeEach(function() {
     this.addMatchers({
-      toParseAs:     function(expected) {
+      toParseAs: function(expected) {
         var result;
 
         function buildNodeVisitor(functions) {
@@ -259,6 +261,7 @@ describe("PEG.js grammar parser", function() {
           action:       doInExpression,
           sequence:     doInSubnodes("elements"),
           labeled:      doInExpression,
+          unlabeled:    doInExpression,
           text:         doInExpression,
           simple_and:   doInExpression,
           simple_not:   doInExpression,
@@ -1026,7 +1029,5 @@ describe("PEG.js grammar parser", function() {
     }));
     expect('start = "abcd"' ).toParseAs(literalGrammar("abcd", false));
   });
-
-
 });
 

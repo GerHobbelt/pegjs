@@ -4,6 +4,10 @@
 describe("compiler pass |reportMissingRules|", function() {
   var pass = PEG.compiler.passes.check.reportMissingRules;
 
+  beforeEach(function() {
+    this.addMatchers(require("./helpers.js"));
+  });
+
   it("reports missing rules", function() {
     expect(pass).toReportError('start = missing', {
       message:  'Referenced rule "missing" does not exist.',

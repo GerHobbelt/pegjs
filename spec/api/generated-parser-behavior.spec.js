@@ -1,6 +1,13 @@
+/* global expect, it, PEG, describe */
+"use strict";
+
 // WARNING: this is the OLD, OBSOLETED spec file; the new copy exists in ../../spec/behavior/generated-parser-behavior.spec.js
 
 describe("generated parser behavior", function() {
+  beforeEach(function() {
+    this.addMatchers(require("./helpers.js"));
+  });
+
   function varyOptimizationOptions(block) {
     function clone(object) {
       var result = {}, key;
@@ -34,10 +41,10 @@ describe("generated parser behavior", function() {
 
   describe("parse", function() {
     var grammar = [
-      'a = "x" { return "a"; }',
-      'b = "x" { return "b"; }',
-      'c = "x" { return "c"; }'
-    ].join("\n"),
+          'a = "x" { return "a"; }',
+          'b = "x" { return "b"; }',
+          'c = "x" { return "c"; }'
+        ].join("\n"),
         parser = PEG.buildParser(grammar, { allowedStartRules: ["b", "c"] }),
         parserAll = PEG.buildParser(grammar, { allowedStartRules: "*" });
 

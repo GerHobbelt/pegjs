@@ -4,6 +4,10 @@
 describe("compiler pass |generateBytecode|", function() {
   var pass = PEG.compiler.passes.generate.generateBytecode;
 
+  beforeEach(function() {
+    this.addMatchers(require("./helpers.js"));
+  });
+
   function bytecodeDetails(bytecode) {
     return {
       rules: [{ bytecode: bytecode }]
