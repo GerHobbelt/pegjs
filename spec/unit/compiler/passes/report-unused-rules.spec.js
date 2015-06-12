@@ -2,25 +2,18 @@
 
 describe("compiler pass |reportUnusedRules|", function() {
   var pass = PEG.compiler.passes.check.reportUnusedRules;
-  function construct(constructor, args) {
-    function F() {
-      return constructor.apply(this, args);
-    }
-    F.prototype = constructor.prototype;
-    return new F();
-  }
   var collector = {
-    emitFatalError: function() {
-      throw construct(PEG.GrammarError, arguments);
+    emitFatalError: function(message, extra_info) {
+      throw new GrammarError(message, extra_info);
     },
-    emitError: function() {
-      throw construct(PEG.GrammarError, arguments);
+    emitError: function(message, extra_info) {
+      throw new GrammarError(message, extra_info);
     },
-    emitWarning: function() {
-      throw construct(PEG.GrammarError, arguments);
+    emitWarning: function(message, extra_info) {
+      throw new GrammarError(message, extra_info);
     },
-    emitInfo: function() {
-      throw construct(PEG.GrammarError, arguments);
+    emitInfo: function(message, extra_info) {
+      throw new GrammarError(message, extra_info);
     }
   };
 

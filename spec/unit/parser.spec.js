@@ -226,7 +226,7 @@ describe("PEG.js grammar parser", function() {
           };
         }
         function rm(node) {
-          delete node.region;
+          delete node.location;
         }
         function doInExpression(node) {
           rm(node);
@@ -283,7 +283,7 @@ describe("PEG.js grammar parser", function() {
 
         try {
           result = PEG.parser.parse(this.actual);
-          // Remove |node.region| from each node, because we don't check it there.
+          // Remove |node.location| from each node, because we don't check it in these tests.
           removeRegionKey(result);
 
           stripLocation(result);
