@@ -708,7 +708,7 @@ PostfixExpression
       };
     })?
     {
-      if (!rest){
+      if (!rest) {
         return argument;
       };
       return {
@@ -718,7 +718,6 @@ PostfixExpression
         prefix:   false
       };
     }
-  
 
 PostfixOperator
   = "++"
@@ -885,7 +884,6 @@ LogicalORExpressionNoIn
 LogicalOROperator
   = "||"
   
-  
 Operator
   = LogicalOROperator
   / LogicalANDOperator
@@ -910,19 +908,18 @@ OperatorNoIn
   / AdditiveOperator
   / MultiplicativeOperator
 
-
 ConditionalExpression
   = test:LogicalORExpression __
     rest:( "?" __ consequent:AssignmentExpression __
-      ":" __ alternate:AssignmentExpression
+           ":" __ alternate:AssignmentExpression
       {
         return {
           consequent: consequent,
           alternate:  alternate
-        }
+        };
       })?
     {
-      if (rest){
+      if (rest) {
         return {
           type:       "ConditionalExpression",
           test:       test,
@@ -936,15 +933,15 @@ ConditionalExpression
 ConditionalExpressionNoIn
   = test:LogicalORExpressionNoIn __
     rest:( "?" __ consequent:AssignmentExpression __
-      ":" __ alternate:AssignmentExpressionNoIn
+           ":" __ alternate:AssignmentExpressionNoIn
       {
         return {
           consequent: consequent,
           alternate:  alternate
-        }
+        };
       })?
     {
-      if (rest){
+      if (rest) {
         return {
           type:       "ConditionalExpression",
           test:       test,
@@ -956,7 +953,7 @@ ConditionalExpressionNoIn
     }
 
 AssignmentExpression
-  = left:(exp:LeftHandSideExpression !( __ Operator) !( __ UnaryOperator){
+  = left:(exp:LeftHandSideExpression !( __ Operator) !( __ UnaryOperator) {
       return exp;
     })
     rest: ( __ operator:AssignmentOperator __
@@ -965,11 +962,11 @@ AssignmentExpression
         return {
           operator: operator,
           right:    right
-        }
+        };
       }
     )?
     {
-      if (!rest){
+      if (!rest) {
         return left;
       };
       return {
@@ -982,7 +979,7 @@ AssignmentExpression
   / ConditionalExpression
 
 AssignmentExpressionNoIn
-  = left:(exp:LeftHandSideExpression !( __ Operator) !( __ UnaryOperator){
+  = left:(exp:LeftHandSideExpression !( __ Operator) !( __ UnaryOperator) {
       return exp;
     })
     rest: ( __ operator:AssignmentOperator __
@@ -991,11 +988,11 @@ AssignmentExpressionNoIn
         return {
           operator: operator,
           right:    right
-        }
+        };
       }
     )?
     {
-      if (!rest){
+      if (!rest) {
         return left;
       };
       return {
