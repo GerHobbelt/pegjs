@@ -9,16 +9,38 @@
     <h1>PEG.js Benchmark Suite</h1>
 
     <div id="options">
-      <label for="run-count">Run each test</label>
-      <input type="text" id="run-count" value="10"> times
-      <input type="checkbox" id="cache">
-      <label for="cache">Use results cache</label>
-      <label for="optimize">Optimize:</label>
-      <select id="optimize">
-        <option value="speed">Speed</option>
-        <option value="size">Size</option>
-      </select>
-      <input type="button" id="run" value="Run">
+      <table class="options-list">
+        <tr>
+          <td>
+            <label for="run-min-time">Minimal runtime</label>
+            <input type="text" id="run-min-time" value="250"> ms
+          </td>
+          <td>
+            <label for="run-count">Run each test</label>
+            <input type="text" id="run-count" value="10"> times
+          </td>
+          <td>
+            <input type="checkbox" id="cache">
+            <label for="cache">Use results cache</label>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <input type="checkbox" id="region" checked="checked">
+            <label for="region">Include region info</label>
+          </td>
+          <td>
+            <label for="optimize">Optimize:</label>
+            <select id="optimize">
+              <option value="speed">Speed</option>
+              <option value="size">Size</option>
+            </select>
+          </td>
+          <td class="run-button-cell">
+            <input type="button" id="run" value="Run">
+          </td>
+        </tr>
+      </table>
     </div>
 
     <table id="results-table">

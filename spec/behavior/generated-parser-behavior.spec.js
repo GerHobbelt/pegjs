@@ -23,7 +23,9 @@ describe("generated parser behavior", function() {
     for (i = 0; i < optionsVariants.length; i++) {
       describe(
         "with options " + jasmine.pp(optionsVariants[i]),
-        function() { block(clone(optionsVariants[i])); }
+        function() { 
+          block(clone(optionsVariants[i])); 
+        }
       );
     }
   }

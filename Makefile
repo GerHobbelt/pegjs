@@ -5,23 +5,31 @@ PEGJS_VERSION = `cat $(VERSION_FILE)`
 # ===== Modules =====
 
 # Order matters -- dependencies must be listed before modules dependent on them.
-MODULES = utils/arrays                          \
-          utils/objects                         \
-          utils/classes                         \
-          grammar-error                         \
-          parser                                \
-          compiler/visitor                      \
-          compiler/asts                         \
-          compiler/opcodes                      \
-          compiler/javascript                   \
-          compiler/passes/generate-bytecode     \
-          compiler/passes/generate-javascript   \
-          compiler/passes/remove-proxy-rules    \
-          compiler/passes/report-left-recursion \
-          compiler/passes/report-infinite-loops \
-          compiler/passes/report-missing-rules  \
-          compiler                              \
-          peg
+MODULES =                                           \
+		  utils/arrays                              \
+		  utils/objects                             \
+		  utils/classes                             \
+		  grammar-error                             \
+		  parser                                    \
+		  compiler/visitor                          \
+          compiler/asts                             \
+		  compiler/opcodes                          \
+		  compiler/javascript                       \
+		  compiler/passes/generate-bytecode         \
+		  compiler/passes/generate-javascript       \
+		  compiler/passes/remove-proxy-rules        \
+		  compiler/passes/report-left-recursion     \
+          compiler/passes/report-infinite-loops     \
+		  compiler/passes/report-missing-rules      \
+		  compiler/passes/report-unused-rules       \
+          compiler/passes/report-duplicate-labels   \
+          compiler/passes/report-duplicate-rules    \
+		  compiler/passes/report-redefined-rules    \
+		  compiler/passes/propagate-descriptions    \
+		  compiler/passes/patch-ast-graph           \
+		  compiler/passes/print-ruleset             \
+		  compiler                                  \
+		  peg
 
 # ===== Directories =====
 
@@ -59,10 +67,10 @@ all: browser
 
 # Generate the grammar parser
 parser:
-	$(PEGJS) $(PARSER_SRC_FILE) $(PARSER_OUT_FILE)
+	$(PEGJS) --verbose --elapsed-time --cache --statistics  $(PARSER_SRC_FILE) $(PARSER_OUT_FILE)
 
 # Build the browser version of the library
-browser:
+browser: parser
 	mkdir -p $(BROWSER_DIR)
 
 	rm -f $(BROWSER_FILE_DEV)
@@ -75,13 +83,13 @@ browser:
 	echo ' *'                                                                          >> $(BROWSER_FILE_DEV)
 	echo ' * http://pegjs.org/'                                                        >> $(BROWSER_FILE_DEV)
 	echo ' *'                                                                          >> $(BROWSER_FILE_DEV)
-	echo ' * Copyright (c) 2010-2013 David Majda'                                      >> $(BROWSER_FILE_DEV)
+	echo ' * Copyright (c) 2010-2014 David Majda'                                      >> $(BROWSER_FILE_DEV)
 	echo ' * Licensed under the MIT license.'                                          >> $(BROWSER_FILE_DEV)
 	echo ' */'                                                                         >> $(BROWSER_FILE_DEV)
 	echo 'var PEG = (function(undefined) {'                                            >> $(BROWSER_FILE_DEV)
 	echo '  var modules = {'                                                           >> $(BROWSER_FILE_DEV)
 	echo '    define: function(name, factory) {'                                       >> $(BROWSER_FILE_DEV)
-	echo '      var dir    = name.replace(/(^|\/)[^/]+$$/, "$$1"),'                    >> $(BROWSER_FILE_DEV)
+	echo '      var dir    = name.replace(/(^|\/)[^\/]+$$/, "$$1"),'                   >> $(BROWSER_FILE_DEV)
 	echo '          module = { exports: {} };'                                         >> $(BROWSER_FILE_DEV)
 	echo ''                                                                            >> $(BROWSER_FILE_DEV)
 	echo '      function require(path) {'                                              >> $(BROWSER_FILE_DEV)
@@ -109,8 +117,8 @@ browser:
 	  echo ''                                                           >> $(BROWSER_FILE_DEV); \
 	done
 
-	echo '  return modules["peg"]' >> $(BROWSER_FILE_DEV)
-	echo '})();'                   >> $(BROWSER_FILE_DEV)
+	echo '  return modules["peg"];' >> $(BROWSER_FILE_DEV)
+	echo '})();'                    >> $(BROWSER_FILE_DEV)
 
 	$(UGLIFYJS)                 \
 	  --mangle                  \
@@ -124,15 +132,46 @@ browserclean:
 	rm -rf $(BROWSER_DIR)
 
 # Run the spec suite
-spec:
+spec: parser
 	$(JASMINE_NODE) --verbose $(SPEC_DIR)
 
 # Run the benchmark suite
-benchmark:
+benchmark-all:								\
+			benchmark 						\
+			benchmark-cache 				\
+			benchmark-locinfo 				\
+			benchmark-cache-locinfo 		\
+			benchmark-size 					\
+			benchmark-size-cache 			\
+			benchmark-size-locinfo 			\
+			benchmark-size-cache-locinfo 
+
+benchmark: parser
 	$(BENCHMARK_RUN)
 
+benchmark-cache: parser
+	$(BENCHMARK_RUN) --cache
+
+benchmark-locinfo: parser
+	$(BENCHMARK_RUN) --includeRegionInfo
+
+benchmark-cache-locinfo: parser
+	$(BENCHMARK_RUN) --cache --includeRegionInfo
+
+benchmark-size: parser
+	$(BENCHMARK_RUN) --optimize size
+
+benchmark-size-cache: parser
+	$(BENCHMARK_RUN) --cache --optimize size
+
+benchmark-size-locinfo: parser
+	$(BENCHMARK_RUN) --includeRegionInfo --optimize size
+
+benchmark-size-cache-locinfo: parser
+	$(BENCHMARK_RUN) --cache --includeRegionInfo --optimize size
+
 # Run JSHint on the source
-hint:
+hint: parser
 	$(JSHINT)                                                                \
 	  `find $(LIB_DIR) -name '*.js'`                                         \
 	  `find $(SPEC_DIR) -name '*.js' -and -not -path '$(SPEC_DIR)/vendor/*'` \

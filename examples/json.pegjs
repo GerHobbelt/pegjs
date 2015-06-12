@@ -32,21 +32,21 @@ ws "whitespace" = [ \t\n\r]*
 /* ----- 3. Values ----- */
 
 value
-  = false
-  / null
-  / true
-  / object
-  / array
-  / number
-  / string
+  = False
+  / Null
+  / True
+  / Object
+  / Array
+  / Number
+  / String
 
-false = "false" { return false; }
-null  = "null"  { return null;  }
-true  = "true"  { return true;  }
+False = "false" { return false; }
+Null  = "null"  { return null;  }
+True  = "true"  { return true;  }
 
 /* ----- 4. Objects ----- */
 
-object
+Object
   = begin_object
     members:(
       first:member
@@ -67,13 +67,13 @@ object
     { return members !== null ? members: {}; }
 
 member
-  = name:string name_separator value:value {
+  = name:String name_separator value:value {
       return { name: name, value: value };
     }
 
 /* ----- 5. Arrays ----- */
 
-array
+Array
   = begin_array
     values:(
       first:value
@@ -85,7 +85,7 @@ array
 
 /* ----- 6. Numbers ----- */
 
-number "number"
+Number "number"
   = minus? int frac? exp? { return parseFloat(text()); }
 
 decimal_point = "."
@@ -100,7 +100,7 @@ zero          = "0"
 
 /* ----- 7. Strings ----- */
 
-string "string"
+String "string"
   = quotation_mark chars:char* quotation_mark { return chars.join(""); }
 
 char
@@ -122,7 +122,9 @@ char
     { return sequence; }
 
 escape         = "\\"
+
 quotation_mark = '"'
+
 unescaped      = [\x20-\x21\x23-\x5B\x5D-\u10FFFF]
 
 /* ----- Core ABNF Rules ----- */

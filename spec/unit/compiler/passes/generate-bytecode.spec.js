@@ -7,7 +7,11 @@ describe("compiler pass |generateBytecode|", function() {
     };
   }
 
-  function constsDetails(consts) { return { consts: consts }; }
+  function constsDetails(consts, actions) {
+    return actions !== undefined
+      ? { consts: consts, actions: [actions] }
+      : { consts: consts };
+  }
 
   describe("for grammar", function() {
     it("generates correct bytecode", function() {
@@ -17,9 +21,9 @@ describe("compiler pass |generateBytecode|", function() {
         'c = "c"'
       ].join("\n"), {
         rules: [
-          { bytecode: [14, 0, 2, 2, 18, 0, 19, 1] },
-          { bytecode: [14, 2, 2, 2, 18, 2, 19, 3] },
-          { bytecode: [14, 4, 2, 2, 18, 4, 19, 5] }
+          { bytecode: [16, 0, 2, 2, 20, 0, 21, 1] },
+          { bytecode: [16, 2, 2, 2, 20, 2, 21, 3] },
+          { bytecode: [16, 4, 2, 2, 20, 4, 21, 5] }
         ]
       });
     });
@@ -43,7 +47,7 @@ describe("compiler pass |generateBytecode|", function() {
   describe("for rule", function() {
     it("generates correct bytecode", function() {
       expect(pass).toChangeAST('start = "a"', bytecodeDetails([
-        14, 0, 2, 2, 18, 0, 19, 1   // <expression>
+        16, 0, 2, 2, 20, 0, 21, 1   // <expression>
       ]));
     });
   });
@@ -53,9 +57,11 @@ describe("compiler pass |generateBytecode|", function() {
 
     it("generates correct bytecode", function() {
       expect(pass).toChangeAST(grammar, bytecodeDetails([
-        24,                          // SILENT_FAILS_ON
+        32,                          // SILENT_FAILS_ON
         14, 1, 2, 2, 18, 1, 19, 2,   // <expression>
-        25,                          // SILENT_FAILS_OFF
+        33,                          // SILENT_FAILS_OFF
+        10, 1, 0,                    // IF_ERROR
+        34,                          // SILENT_FAILS_RESET
         10, 2, 0,                    // IF_ERROR
         19, 0                        //   * FAIL
       ]));
@@ -73,13 +79,13 @@ describe("compiler pass |generateBytecode|", function() {
   describe("for choice", function() {
     it("generates correct bytecode", function() {
       expect(pass).toChangeAST('start = "a" / "b" / "c"', bytecodeDetails([
-        14, 0, 2, 2, 18, 0, 19, 1,   // <alternatives[0]>
+        16, 0, 2, 2, 20, 0, 21, 1,   // <alternatives[0]>
         10, 21, 0,                   // IF_ERROR
         2,                           //   * POP
-        14, 2, 2, 2, 18, 2, 19, 3,   //     <alternatives[1]>
+        16, 2, 2, 2, 20, 2, 21, 3,   //     <alternatives[1]>
         10, 9, 0,                    //     IF_ERROR
         2,                           //       * POP
-        14, 4, 2, 2, 18, 4, 19, 5    //         <alternatives[2]>
+        16, 4, 2, 2, 20, 4, 21, 5    //         <alternatives[2]>
       ]));
     });
   });
@@ -91,10 +97,10 @@ describe("compiler pass |generateBytecode|", function() {
       it("generates correct bytecode", function() {
         expect(pass).toChangeAST(grammar, bytecodeDetails([
           1,                           // PUSH_CURR_POS
-          14, 0, 2, 2, 18, 0, 19, 1,   // <expression>
+          16, 0, 2, 2, 20, 0, 21, 1,   // <expression>
           11, 6, 0,                    // IF_NOT_ERROR
-          20, 1,                       //   * LOAD_SAVED_POS
-          22, 2, 1, 0,                 //     CALL
+          22, 1,                       //   * LOAD_SAVED_POS
+          24, 0, 1, 0,                 //     CALL
           5                            // NIP
         ]));
       });
@@ -102,8 +108,9 @@ describe("compiler pass |generateBytecode|", function() {
       it("defines correct constants", function() {
         expect(pass).toChangeAST(grammar, constsDetails([
           '"a"',
-          '{ type: "literal", value: "a", description: "\\"a\\"" }',
-          'function() { code }'
+          '{ type: "literal", value: "a", description: "\\"a\\"" }'
+        ], [
+          [], ' code '
         ]));
       });
     });
@@ -114,10 +121,10 @@ describe("compiler pass |generateBytecode|", function() {
       it("generates correct bytecode", function() {
         expect(pass).toChangeAST(grammar, bytecodeDetails([
           1,                           // PUSH_CURR_POS
-          14, 0, 2, 2, 18, 0, 19, 1,   // <expression>
+          16, 0, 2, 2, 20, 0, 21, 1,   // <expression>
           11, 7, 0,                    // IF_NOT_ERROR
-          20, 1,                       //   * LOAD_SAVED_POS
-          22, 2, 1, 1, 0,              //     CALL
+          22, 1,                       //   * LOAD_SAVED_POS
+          24, 0, 1, 1, 0,              //     CALL
           5                            // NIP
         ]));
       });
@@ -125,8 +132,9 @@ describe("compiler pass |generateBytecode|", function() {
       it("defines correct constants", function() {
         expect(pass).toChangeAST(grammar, constsDetails([
           '"a"',
-          '{ type: "literal", value: "a", description: "\\"a\\"" }',
-          'function(a) { code }'
+          '{ type: "literal", value: "a", description: "\\"a\\"" }'
+        ], [
+          ['a'], ' code '
         ]));
       });
     });
@@ -137,14 +145,14 @@ describe("compiler pass |generateBytecode|", function() {
       it("generates correct bytecode", function() {
         expect(pass).toChangeAST(grammar, bytecodeDetails([
           1,                           // PUSH_CURR_POS
-          14, 0, 2, 2, 18, 0, 19, 1,   // <elements[0]>
+          16, 0, 2, 2, 18, 0, 19, 1,   // <elements[0]>
           11, 40, 3,                   // IF_NOT_ERROR
-          14, 2, 2, 2, 18, 2, 19, 3,   //   * <elements[1]>
+          16, 2, 2, 2, 18, 2, 19, 3,   //   * <elements[1]>
           11, 25, 4,                   //     IF_NOT_ERROR
-          14, 4, 2, 2, 18, 4, 19, 5,   //       * <elements[2]>
+          16, 4, 2, 2, 18, 4, 19, 5,   //       * <elements[2]>
           11, 10, 4,                   //         IF_NOT_ERROR
-          20, 3,                       //           * LOAD_SAVED_POS
-          22, 6, 3, 3, 2, 1, 0,        //             CALL
+          22, 3,                       //           * LOAD_SAVED_POS
+          24, 0, 3, 3, 2, 1, 0,        //             CALL
           5,                           //             NIP
           4, 3,                        //           * POP_N
           3,                           //             POP_CURR_POS
@@ -165,55 +173,78 @@ describe("compiler pass |generateBytecode|", function() {
           '"b"',
           '{ type: "literal", value: "b", description: "\\"b\\"" }',
           '"c"',
-          '{ type: "literal", value: "c", description: "\\"c\\"" }',
-          'function(a, b, c) { code }'
+          '{ type: "literal", value: "c", description: "\\"c\\"" }'
+        ], [
+          ['a', 'b', 'c'], ' code '
         ]));
       });
     });
   });
 
   describe("for sequence", function() {
-    var grammar = 'start = "a" "b" "c"';
+    describe("empty", function() {
+      var grammar = 'start = ';
 
-    it("generates correct bytecode", function() {
-      expect(pass).toChangeAST(grammar, bytecodeDetails([
-        1,                           // PUSH_CURR_POS
-        14, 0, 2, 2, 18, 0, 19, 1,   // <elements[0]>
-        11, 33, 3,                   // IF_NOT_ERROR
-        14, 2, 2, 2, 18, 2, 19, 3,   //   * <elements[1]>
-        11, 18, 4,                   //     IF_NOT_ERROR
-        14, 4, 2, 2, 18, 4, 19, 5,   //       * <elements[2]>
-        11, 3, 4,                    //         IF_NOT_ERROR
-        7, 3,                        //           * WRAP
-        5,                           //             NIP
-        4, 3,                        //           * POP_N
-        3,                           //             POP_CURR_POS
-        28,                          //             PUSH_FAILED
-        4, 2,                        //       * POP_N
-        3,                           //         POP_CURR_POS
-        28,                          //         PUSH_FAILED
-        2,                           //   * POP
-        3,                           //     POP_CURR_POS
-        28                           //     PUSH_FAILED
-      ]));
+      it("does fail the parse with an error", function() {
+        expect(function () {
+          var parser = PEG.buildParser(grammar);
+        }).toThrow('Expected "!", "$", "&", "(", ".", character class, comment, end of line, identifier, literal or whitespace but end of input found.');
+      });
+
+      xit("generates correct bytecode", function() {
+        expect(pass).toChangeAST(grammar, bytecodeDetails([
+          0, 0   // PUSH
+        ]));
+      });
+
+      xit("defines correct constants", function() {
+        expect(pass).toChangeAST(grammar, constsDetails(['[]']));
+      });
     });
 
-    it("defines correct constants", function() {
-      expect(pass).toChangeAST(grammar, constsDetails([
-        '"a"',
-        '{ type: "literal", value: "a", description: "\\"a\\"" }',
-        '"b"',
-        '{ type: "literal", value: "b", description: "\\"b\\"" }',
-        '"c"',
-        '{ type: "literal", value: "c", description: "\\"c\\"" }'
-      ]));
+    describe("non-empty", function() {
+      var grammar = 'start = "a" "b" "c"';
+
+      it("generates correct bytecode", function() {
+        expect(pass).toChangeAST(grammar, bytecodeDetails([
+          1,                           // PUSH_CURR_POS
+          16, 0, 2, 2, 18, 0, 19, 1,   // <elements[0]>
+          11, 33, 3,                   // IF_NOT_ERROR
+          16, 2, 2, 2, 18, 2, 19, 3,   //   * <elements[1]>
+          11, 18, 4,                   //     IF_NOT_ERROR
+          16, 4, 2, 2, 18, 4, 19, 5,   //       * <elements[2]>
+          11, 3, 4,                    //         IF_NOT_ERROR
+          7, 3,                        //           * WRAP
+          5,                           //             NIP
+          4, 3,                        //           * POP_N
+          3,                           //             POP_CURR_POS
+          28,                          //             PUSH_FAILED
+          4, 2,                        //       * POP_N
+          3,                           //         POP_CURR_POS
+          28,                          //         PUSH_FAILED
+          2,                           //   * POP
+          3,                           //     POP_CURR_POS
+          28                           //     PUSH_FAILED
+        ]));
+      });
+
+      it("defines correct constants", function() {
+        expect(pass).toChangeAST(grammar, constsDetails([
+          '"a"',
+          '{ type: "literal", value: "a", description: "\\"a\\"" }',
+          '"b"',
+          '{ type: "literal", value: "b", description: "\\"b\\"" }',
+          '"c"',
+          '{ type: "literal", value: "c", description: "\\"c\\"" }'
+        ]));
+      });
     });
   });
 
   describe("for labeled", function() {
     it("generates correct bytecode", function() {
       expect(pass).toChangeAST('start = a:"a"', bytecodeDetails([
-        14, 0, 2, 2, 18, 0, 19, 1   // <expression>
+        16, 0, 2, 2, 20, 0, 21, 1   // <expression>
       ]));
     });
   });
@@ -222,7 +253,7 @@ describe("compiler pass |generateBytecode|", function() {
     it("generates correct bytecode", function() {
       expect(pass).toChangeAST('start = $"a"', bytecodeDetails([
         1,                           // PUSH_CURR_POS
-        14, 0, 2, 2, 18, 0, 19, 1,   // <expression>
+        16, 0, 2, 2, 20, 0, 21, 1,   // <expression>
         11, 2, 1,                    // IF_NOT_ERROR
         2,                           //   * POP
         8,                           //     TEXT
@@ -237,9 +268,9 @@ describe("compiler pass |generateBytecode|", function() {
     it("generates correct bytecode", function() {
       expect(pass).toChangeAST(grammar, bytecodeDetails([
         1,                           // PUSH_CURR_POS
-        24,                          // SILENT_FAILS_ON
-        14, 0, 2, 2, 18, 0, 19, 1,   // <expression>
-        25,                          // SILENT_FAILS_OFF
+        26,                          // SILENT_FAILS_ON
+        16, 0, 2, 2, 18, 0, 19, 1,   // <expression>
+        27,                          // SILENT_FAILS_OFF
         11, 3, 3,                    // IF_NOT_ERROR
         2,                           //   * POP
         3,                           //     POP_CURR_POS
@@ -264,9 +295,9 @@ describe("compiler pass |generateBytecode|", function() {
     it("generates correct bytecode", function() {
       expect(pass).toChangeAST(grammar, bytecodeDetails([
         1,                           // PUSH_CURR_POS
-        24,                          // SILENT_FAILS_ON
-        14, 0, 2, 2, 18, 0, 19, 1,   // <expression>
-        25,                          // SILENT_FAILS_OFF
+        26,                          // SILENT_FAILS_ON
+        16, 0, 2, 2, 18, 0, 19, 1,   // <expression>
+        27,                          // SILENT_FAILS_OFF
         10, 3, 3,                    // IF_ERROR
         2,                           //   * POP
         2,                           //     POP
@@ -359,8 +390,10 @@ describe("compiler pass |generateBytecode|", function() {
 
       it("generates correct bytecode", function() {
         expect(pass).toChangeAST(grammar, bytecodeDetails([
-          21,            // UPDATE_SAVED_POS
-          22, 0, 0, 0,   // CALL
+          23,            // UPDATE_CURR_POS
+          26,            // SILENT_FAILS_ON
+          24, 0, 0, 0,   // CALL
+          27,            // SILENT_FAILS_OFF
           9, 2, 2,       // IF
           2,             //   * POP
           26,            //     PUSH_UNDEFINED
@@ -383,14 +416,16 @@ describe("compiler pass |generateBytecode|", function() {
       it("generates correct bytecode", function() {
         expect(pass).toChangeAST(grammar, bytecodeDetails([
           1,                           // PUSH_CURR_POS
-          14, 0, 2, 2, 18, 0, 19, 1,   // <elements[0]>
+          16, 0, 2, 2, 18, 0, 19, 1,   // <elements[0]>
           11, 55, 3,                   // IF_NOT_ERROR
-          14, 2, 2, 2, 18, 2, 19, 3,   //   * <elements[1]>
+          16, 2, 2, 2, 18, 2, 19, 3,   //   * <elements[1]>
           11, 40, 4,                   //     IF_NOT_ERROR
-          14, 4, 2, 2, 18, 4, 19, 5,   //       * <elements[2]>
+          16, 4, 2, 2, 18, 4, 19, 5,   //       * <elements[2]>
           11, 25, 4,                   //         IF_NOT_ERROR
-          21,                          //           * UPDATE_SAVED_POS
+          23,                          //           * UPDATE_CURR_POS
+          26,                          //             SILENT_FAILS_ON
           22, 6, 0, 3, 2, 1, 0,        //             CALL
+          27,                          //             SILENT_FAILS_OFF
           9, 2, 2,                     //             IF
           2,                           //               * POP
           26,                          //                 PUSH_UNDEFINED
@@ -423,6 +458,8 @@ describe("compiler pass |generateBytecode|", function() {
           '"c"',
           '{ type: "literal", value: "c", description: "\\"c\\"" }',
           'function(a, b, c) { code }'
+        ], [
+          ['a', 'b', 'c'], ' code '
         ]));
       });
     });
@@ -434,8 +471,10 @@ describe("compiler pass |generateBytecode|", function() {
 
       it("generates correct bytecode", function() {
         expect(pass).toChangeAST(grammar, bytecodeDetails([
-          21,            // UPDATE_SAVED_POS
-          22, 0, 0, 0,   // CALL
+          23,            // UPDATE_CURR_POS
+          26,            // SILENT_FAILS_ON
+          24, 0, 0, 0,   // CALL
+          27,            // SILENT_FAILS_OFF
           9, 2, 2,       // IF
           2,             //   * POP
           28,            //     PUSH_FAILED
@@ -458,14 +497,16 @@ describe("compiler pass |generateBytecode|", function() {
       it("generates correct bytecode", function() {
         expect(pass).toChangeAST(grammar, bytecodeDetails([
           1,                           // PUSH_CURR_POS
-          14, 0, 2, 2, 18, 0, 19, 1,   // <elements[0]>
+          16, 0, 2, 2, 18, 0, 19, 1,   // <elements[0]>
           11, 55, 3,                   // IF_NOT_ERROR
-          14, 2, 2, 2, 18, 2, 19, 3,   //   * <elements[1]>
+          16, 2, 2, 2, 18, 2, 19, 3,   //   * <elements[1]>
           11, 40, 4,                   //     IF_NOT_ERROR
-          14, 4, 2, 2, 18, 4, 19, 5,   //       * <elements[2]>
+          16, 4, 2, 2, 18, 4, 19, 5,   //       * <elements[2]>
           11, 25, 4,                   //         IF_NOT_ERROR
-          21,                          //           * UPDATE_SAVED_POS
+          23,                          //           * UPDATE_CURR_POS
+          26,                          //             SILENT_FAILS_ON
           22, 6, 0, 3, 2, 1, 0,        //             CALL
+          27,                          //             SILENT_FAILS_OFF
           9, 2, 2,                     //             IF
           2,                           //               * POP
           28,                          //                 PUSH_FAILED
@@ -498,6 +539,206 @@ describe("compiler pass |generateBytecode|", function() {
           '"c"',
           '{ type: "literal", value: "c", description: "\\"c\\"" }',
           'function(a, b, c) { code }'
+        ], [
+          ['a', 'b', 'c'], ' code '
+        ]));
+      });
+    });
+  });
+
+  describe("for range", function() {
+    describe("| .. | (edge case -- no boundaries)", function() {
+      var grammar = 'start = "a"| .. |';
+
+      it("generates correct bytecode", function() {
+        expect(pass).toChangeAST(grammar, bytecodeDetails([
+          29,                          // PUSH_EMPTY_ARRAY
+          14, 0, 2, 2, 18, 0, 19, 1,   // <expression>
+          12, 9,                       // WHILE_NOT_ERROR
+          6,                           //   * APPEND
+          14, 0, 2, 2, 18, 0, 19, 1,   //     <expression>
+          2                            // POP
+        ]));
+      });
+
+      it("defines correct constants", function() {
+        expect(pass).toChangeAST(grammar, constsDetails([
+          '"a"',
+          '{ type: "literal", value: "a", description: "\\"a\\"" }'
+        ]));
+      });
+    });
+
+    describe("| ..3| (edge case -- no min boundary)", function() {
+      var grammar = 'start = "a"| ..3|';
+
+      it("generates correct bytecode", function() {
+        expect(pass).toChangeAST(grammar, bytecodeDetails([
+          29,                          // PUSH_EMPTY_ARRAY
+          14, 0, 2, 2, 18, 0, 19, 1,   // <expression>
+          12, 14,                      // WHILE_NOT_ERROR
+          6,                           //   * APPEND
+          31, 3, 1, 8,                 //     IF_ARRLEN_MAX
+          28,                          //       * PUSH_FAILED
+          14, 0, 2, 2, 18, 0, 19, 1,   //       * <expression>
+          2                            // POP
+        ]));
+      });
+
+      it("defines correct constants", function() {
+        expect(pass).toChangeAST(grammar, constsDetails([
+          '"a"',
+          '{ type: "literal", value: "a", description: "\\"a\\"" }'
+        ]));
+      });
+    });
+
+    describe("| ..1| (edge case -- no min boundary -- same as |optional|)", function() {
+      var grammar = 'start = "a"| ..1|';
+
+      it("generates correct bytecode", function() {
+        expect(pass).toChangeAST(grammar, bytecodeDetails([
+          29,                          // PUSH_EMPTY_ARRAY
+          14, 0, 2, 2, 18, 0, 19, 1,   // <expression>
+          12, 14,                      // WHILE_NOT_ERROR
+          6,                           //   * APPEND
+          31, 1, 1, 8,                 //     IF_ARRLEN_MAX
+          28,                          //       * PUSH_FAILED
+          14, 0, 2, 2, 18, 0, 19, 1,   //       * <expression>
+          2                            // POP
+        ]));
+      });
+
+      it("defines correct constants", function() {
+        expect(pass).toChangeAST(grammar, constsDetails([
+          '"a"',
+          '{ type: "literal", value: "a", description: "\\"a\\"" }'
+        ]));
+      });
+    });
+
+    describe("|2.. | (edge case -- no max boundary)", function() {
+      var grammar = 'start = "a"|2.. |';
+
+      it("generates correct bytecode", function() {
+        expect(pass).toChangeAST(grammar, bytecodeDetails([
+          29,                          // PUSH_EMPTY_ARRAY
+          14, 0, 2, 2, 18, 0, 19, 1,   // <expression>
+          12, 9,                       // WHILE_NOT_ERROR
+          6,                           //   * APPEND
+          14, 0, 2, 2, 18, 0, 19, 1,   //     <expression>
+          2,                           // POP
+          30, 2, 2, 0,                 // IF_ARRLEN_MIN
+          2,                           //   * POP
+          28                           //     PUSH_FAILED
+        ]));
+      });
+
+      it("defines correct constants", function() {
+        expect(pass).toChangeAST(grammar, constsDetails([
+          '"a"',
+          '{ type: "literal", value: "a", description: "\\"a\\"" }'
+        ]));
+      });
+    });
+
+    describe("|0.. | (edge case -- no max boundary -- same as |zero or more|)", function() {
+      var grammar = 'start = "a"|0.. |';
+
+      it("generates correct bytecode", function() {
+        expect(pass).toChangeAST(grammar, bytecodeDetails([
+          29,                          // PUSH_EMPTY_ARRAY
+          14, 0, 2, 2, 18, 0, 19, 1,   // <expression>
+          12, 9,                       // WHILE_NOT_ERROR
+          6,                           //   * APPEND
+          14, 0, 2, 2, 18, 0, 19, 1,   //     <expression>
+          2,                           // POP
+        ]));
+      });
+
+      it("defines correct constants", function() {
+        expect(pass).toChangeAST(grammar, constsDetails([
+          '"a"',
+          '{ type: "literal", value: "a", description: "\\"a\\"" }'
+        ]));
+      });
+    });
+
+    describe("|1.. | (edge case -- no max boundary -- same as |one or more|)", function() {
+      var grammar = 'start = "a"|1.. |';
+
+      it("generates correct bytecode", function() {
+        expect(pass).toChangeAST(grammar, bytecodeDetails([
+          29,                          // PUSH_EMPTY_ARRAY
+          14, 0, 2, 2, 18, 0, 19, 1,   // <expression>
+          12, 9,                       // WHILE_NOT_ERROR
+          6,                           //   * APPEND
+          14, 0, 2, 2, 18, 0, 19, 1,   //     <expression>
+          2,                           // POP
+          30, 1, 2, 0,                 // IF_ARRLEN_MIN
+          2,                           //   * POP
+          28                           //     PUSH_FAILED
+        ]));
+      });
+
+      it("defines correct constants", function() {
+        expect(pass).toChangeAST(grammar, constsDetails([
+          '"a"',
+          '{ type: "literal", value: "a", description: "\\"a\\"" }'
+        ]));
+      });
+    });
+
+    describe("|2..3|", function() {
+      var grammar = 'start = "a"|2..3|';
+
+      it("generates correct bytecode", function() {
+        expect(pass).toChangeAST(grammar, bytecodeDetails([
+          29,                          // PUSH_EMPTY_ARRAY
+          14, 0, 2, 2, 18, 0, 19, 1,   // <expression>
+          12, 14,                      // WHILE_NOT_ERROR
+          6,                           //   * APPEND
+          31, 3, 1, 8,                 //     IF_ARRLEN_MAX
+          28,                          //       * PUSH_FAILED
+          14, 0, 2, 2, 18, 0, 19, 1,   //       * <expression>
+          2,                           // POP
+          30, 2, 2, 0,                 // IF_ARRLEN_MIN
+          2,                           //   * POP
+          28                           //     PUSH_FAILED
+        ]));
+      });
+
+      it("defines correct constants", function() {
+        expect(pass).toChangeAST(grammar, constsDetails([
+          '"a"',
+          '{ type: "literal", value: "a", description: "\\"a\\"" }'
+        ]));
+      });
+    });
+
+    describe("|42| (edge case -- exact repetitions)", function() {
+      var grammar = 'start = "a"|42|';
+
+      it("generates correct bytecode", function() {
+        expect(pass).toChangeAST(grammar, bytecodeDetails([
+          29,                          // PUSH_EMPTY_ARRAY
+          14, 0, 2, 2, 18, 0, 19, 1,   // <expression>
+          12, 14,                      // WHILE_NOT_ERROR
+          6,                           //   * APPEND
+          31, 42, 1, 8,                //     IF_ARRLEN_MAX
+          28,                          //       * PUSH_FAILED
+          14, 0, 2, 2, 18, 0, 19, 1,   //       * <expression>
+          2,                           // POP
+          30, 42, 2, 0,                // IF_ARRLEN_MIN
+          2,                           //   * POP
+          28                           //     PUSH_FAILED
+        ]));
+      });
+
+      it("defines correct constants", function() {
+        expect(pass).toChangeAST(grammar, constsDetails([
+          '"a"',
+          '{ type: "literal", value: "a", description: "\\"a\\"" }'
         ]));
       });
     });
@@ -511,7 +752,7 @@ describe("compiler pass |generateBytecode|", function() {
       ].join("\n"), {
         rules: [
           {
-            bytecode: [23, 1]   // RULE
+            bytecode: [25, 1]   // RULE
           },
           { }
         ]
@@ -539,9 +780,9 @@ describe("compiler pass |generateBytecode|", function() {
 
       it("generates correct bytecode", function() {
         expect(pass).toChangeAST(grammar, bytecodeDetails([
-          14, 0, 2, 2,   // MATCH_STRING
-          18, 0,         //   * ACCEPT_STRING
-          19, 1          //   * FAIL
+          16, 0, 2, 2,   // MATCH_STRING
+          20, 0,         //   * ACCEPT_STRING
+          21, 1          //   * FAIL
         ]));
       });
 
@@ -558,9 +799,9 @@ describe("compiler pass |generateBytecode|", function() {
 
       it("generates correct bytecode", function() {
         expect(pass).toChangeAST(grammar, bytecodeDetails([
-          15, 0, 2, 2,   // MATCH_STRING_IC
-          17, 1,         //   * ACCEPT_N
-          19, 1          //   * FAIL
+          17, 0, 2, 2,   // MATCH_STRING_IC
+          19, 1,         //   * ACCEPT_N
+          21, 1          //   * FAIL
         ]));
       });
 
@@ -576,9 +817,9 @@ describe("compiler pass |generateBytecode|", function() {
   describe("for class", function() {
     it("generates correct bytecode", function() {
       expect(pass).toChangeAST('start = [a]', bytecodeDetails([
-        16, 0, 2, 2,   // MATCH_REGEXP
-        17, 1,         //   * ACCEPT_N
-        19, 1          //   * FAIL
+        18, 0, 2, 2,   // MATCH_REGEXP
+        19, 1,         //   * ACCEPT_N
+        21, 1          //   * FAIL
       ]));
     });
 
@@ -642,9 +883,9 @@ describe("compiler pass |generateBytecode|", function() {
 
     it("generates bytecode", function() {
       expect(pass).toChangeAST(grammar, bytecodeDetails([
-        13, 2, 2,   // MATCH_ANY
-        17, 1,      //   * ACCEPT_N
-        19, 0       //   * FAIL
+        15, 2, 2,   // MATCH_ANY
+        19, 1,      //   * ACCEPT_N
+        21, 0       //   * FAIL
       ]));
     });
 

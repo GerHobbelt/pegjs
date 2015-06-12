@@ -10,6 +10,12 @@ $("#run").click(function() {
     );
   }
 
+  function appendFailureMessage(report) {
+    resultsTable.append(
+      "<tr class='failure'><td colspan='4'><pre>" + report + "</pre></td></tr>"
+    );
+  }
+
   function appendResult(klass, title, url, inputSize, parseTime) {
     var KB      = 1024,
         MS_IN_S = 1000;
@@ -57,9 +63,11 @@ $("#run").click(function() {
    */
 
   var runCount = parseInt($("#run-count").val(), 10),
+      minimumRunTime = parseInt($("#run-min-time").val(), 10),
       options  = {
-        cache:    $("#cache").is(":checked"),
-        optimize: $("#optimize").val()
+        cache:              $("#cache").is(":checked"),
+        includeRegionInfo:  $("#region").is(":checked"),
+        optimize:           $("#optimize").val()
       };
 
   if (isNaN(runCount) || runCount <= 0) {
@@ -67,7 +75,10 @@ $("#run").click(function() {
     return;
   }
 
-  Runner.run(benchmarks, runCount, options, {
+  Runner.run(benchmarks, {
+    runCount: runCount,
+    minimumRunTime: minimumRunTime
+  }, options, {
     readFile: function(file) {
       return $.ajax({
         type:     "GET",
@@ -77,25 +88,51 @@ $("#run").click(function() {
       }).responseText;
     },
 
-    testStart: function(benchmark, test) {
+    testStart: function(benchmark, test, state) {
       /* Nothing to do. */
     },
 
-    testFinish: function(benchmark, test, inputSize, parseTime) {
+    testOneRound: function(benchmark, test, iterationIndex, parseTime, state) {
+      /* Nothing to do. */
+    },
+
+    testFinish: function(benchmark, test, inputSize, parseTime, state) {
+      var title = test.title;
+
+      if (state.testFailCollection.length > 0) {
+        // grab the first failure and report it:
+        var firstFailure = state.testFailCollection[0];
+
+        title += " !FAILED!";
+
+        var ex = firstFailure.failure;
+        var errMsg = ex.message;
+        var locInfo = "";
+        if (ex.line || ex.column || ex.offset) {
+          locInfo = " (line: " + ex.line + ", column: " + ex.column + " ~ offset: " + ex.offset + ")";
+        }
+        var errPreMsg = "";
+        if (ex.name) {
+          errPreMsg = ex.name + ": ";
+        }
+        var msg = errPreMsg + errMsg + locInfo;
+        appendFailureMessage(msg.trim());
+      }
+
       appendResult(
         "individual",
-        test.title,
+        title,
         benchmark.id + "/" + test.file,
         inputSize,
         parseTime
       );
     },
 
-    benchmarkStart: function(benchmark) {
+    benchmarkStart: function(benchmark, state) {
       appendHeading(benchmark.title);
     },
 
-    benchmarkFinish: function(benchmark, inputSize, parseTime) {
+    benchmarkFinish: function(benchmark, inputSize, parseTime, state) {
       appendResult(
         "benchmark-total",
         benchmark.title + " total",
@@ -105,14 +142,14 @@ $("#run").click(function() {
       );
     },
 
-    start: function() {
+    start: function(state) {
       $("#run-count, #cache, #run").attr("disabled", "disabled");
 
       resultsTable.show();
       $("#results-table tr").slice(1).remove();
     },
 
-    finish: function(inputSize, parseTime) {
+    finish: function(inputSize, parseTime, state) {
       appendResult(
         "total",
         "Total",

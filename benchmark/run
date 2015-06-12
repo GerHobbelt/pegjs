@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-var util = require("util");
 var fs   = require("fs");
 var PEG  = require("../lib/peg");
+var statistics = require("../lib/statistics");
 
 [
   "benchmarks.js",
@@ -37,52 +37,82 @@ function center(text, length) {
 }
 
 function writeTableHeader() {
-  util.puts("┌─────────────────────────────────────┬───────────┬────────────┬──────────────┐");
-  util.puts("│                Test                 │ Inp. size │ Avg. time  │  Avg. speed  │");
+  console.log("┌─────────────────────────────────────┬───────────┬────────────┬──────────────┐");
+  console.log("│                Test                 │ Inp. size │ Avg. time  │  Avg. speed  │");
 }
 
-function writeHeading(heading) {
-  util.puts("├─────────────────────────────────────┴───────────┴────────────┴──────────────┤");
-  util.puts("│ " + center(heading, 75) + " │");
-  util.puts("├─────────────────────────────────────┬───────────┬────────────┬──────────────┤");
+function writeHeading(heading, options) {
+  var extra = [""];
+  if (options.optimize) {
+    extra.push("O:" + options.optimize.toUpperCase());
+  }
+  if (options.cache) {
+    extra.push("CACHE");
+  }
+  if (options.includeRegionInfo) {
+    extra.push("REGIONINFO");
+  }
+  extra = extra.join(" +");
+  heading += extra;
+
+  console.log("├─────────────────────────────────────┴───────────┴────────────┴──────────────┤");
+  console.log("│ " + center(heading, 75) + " │");
+  console.log("├─────────────────────────────────────┬───────────┬────────────┬──────────────┤");
 }
 
 function writeResult(title, inputSize, parseTime) {
   var KB      = 1024;
   var MS_IN_S = 1000;
 
-  util.puts("│ "
+  console.log("│ "
     + padRight(title, 35)
     + " │ "
     + padLeft((inputSize / KB).toFixed(2), 6)
     + " kB │ "
     + padLeft(parseTime.toFixed(2), 7)
     + " ms │ "
-    + padLeft(((inputSize / KB) / (parseTime / MS_IN_S)).toFixed(2), 7)
+    + padLeft((parseTime ? ((inputSize / KB) / (parseTime / MS_IN_S)).toFixed(2) : "---"), 7)
     + " kB/s │"
   );
 }
 
 function writeSeparator() {
-  util.puts("├─────────────────────────────────────┼───────────┼────────────┼──────────────┤");
+  console.log("├─────────────────────────────────────┼───────────┼────────────┼──────────────┤");
 }
 
 function writeTableFooter() {
-  util.puts("└─────────────────────────────────────┴───────────┴────────────┴──────────────┘");
+  console.log("└─────────────────────────────────────┴───────────┴────────────┴──────────────┘");
 }
 
 /* Helpers */
 
 function printHelp() {
-  util.puts("Usage: run [options]");
-  util.puts("");
-  util.puts("Runs PEG.js benchmark suite.");
-  util.puts("");
-  util.puts("Options:");
-  util.puts("  -n, --run-count <n>          number of runs (default: 10)");
-  util.puts("      --cache                  make tested parsers cache results");
-  util.puts("  -o, --optimize <goal>        select optimization for speed or size (default:");
-  util.puts("                               speed)");
+  console.log("Usage: run [options] [<benchmarks_file>]");
+  console.log("");
+  console.log("Runs PEG.js benchmark suite.");
+  console.log("");
+  console.log("You may pass an optional JSON benchmarks definition list file");
+  console.log("which will be used instead of the internal default benchmark");
+  console.log("set.");
+  console.log("");
+  console.log("Options:");
+  console.log("  -n, --run-count <n>          number of runs (default: 10)");
+  console.log("      --cache                  make tested parsers cache results");
+  console.log("      --includeRegionInfo      make tested parsers add region info to each AST node");
+  console.log("      --statistics             make tested parsers collect run-time statistics");
+  console.log("  -o, --optimize <goal>        select optimization for speed or size (default:");
+  console.log("                               speed)");
+  console.log("      --plugin <plugin>        use a specified plugin (can be specified");
+  console.log("                               multiple times)");
+  console.log("      --extra-options <options>");
+  console.log("                               additional options (in JSON format) to pass");
+  console.log("                               to PEG.buildParser");
+  console.log("      --extra-options-file <file>");
+  console.log("                               file with additional options (in JSON");
+  console.log("                               format) to pass to PEG.buildParser");
+  console.log("      --verbose                verbose output, including parser diagnostics");
+  console.log("  -v, --version                print version information and exit");
+  console.log("  -h, --help                   print help and exit");
 }
 
 function exitSuccess() {
@@ -93,9 +123,33 @@ function exitFailure() {
   process.exit(1);
 }
 
-function abort(message) {
-  util.error(message);
+function abort(message, ex) {
+  console.error(message);
+  if (options.verboseOutput && ex && ex.stack) {
+    console.error("Stacktrace:\n", ex.stack);
+  }
   exitFailure();
+}
+
+function addExtraOptions(options, json) {
+  var extraOptions;
+
+  try {
+    extraOptions = JSON.parse(json);
+  } catch (e) {
+    if (!(e instanceof SyntaxError)) { throw e; }
+
+    abort("Error parsing JSON: " + e.message, e);
+  }
+  if (typeof extraOptions !== "object") {
+    abort("The JSON with extra options has to represent an object.");
+  }
+
+  for (var key in extraOptions) {
+    if (extraOptions.hasOwnProperty(key)) {
+      options[key] = extraOptions[key];
+    }
+  }
 }
 
 /* Arguments */
@@ -110,12 +164,16 @@ function nextArg() {
   args.shift();
 }
 
+
 /* Main */
 
 var runCount = 10;
 var options = {
-  cache:    false,
-  optimize: "speed"
+  cache:    0,
+  collectRunTimeStatistics: 0,
+  verboseOutput: false,
+  optimize: "speed",
+  plugins:  []
 };
 
 while (args.length > 0 && isOption(args[0])) {
@@ -133,7 +191,15 @@ while (args.length > 0 && isOption(args[0])) {
       break;
 
     case "--cache":
-      options.cache = true;
+      options.cache++;
+      break;
+
+    case "--includeRegionInfo":
+      options.includeRegionInfo = true;
+      break;
+
+    case "--statistics":
+      options.collectRunTimeStatistics++;
       break;
 
     case "-o":
@@ -148,10 +214,62 @@ while (args.length > 0 && isOption(args[0])) {
       options.optimize = args[0];
       break;
 
+    case "--plugin":
+      nextArg();
+      if (args.length === 0) {
+        abort("Missing parameter of the --plugin option.");
+      }
+      var id = /^(\.\/|\.\.\/)/.test(args[0]) ? path.resolve(args[0]) : args[0];
+      var mod;
+      try {
+        mod = require(id);
+      } catch (e) {
+        if (e.code !== "MODULE_NOT_FOUND") { throw e; }
+
+        abort("Can't load module \"" + id + "\".", e);
+      }
+      options.plugins.push(mod);
+      break;
+
+    case "--extra-options":
+      nextArg();
+      if (args.length === 0) {
+        abort("Missing parameter of the --extra-options option.");
+      }
+      addExtraOptions(options, args[0]);
+      break;
+
+    case "--extra-options-file":
+      nextArg();
+      if (args.length === 0) {
+        abort("Missing parameter of the --extra-options-file option.");
+      }
+      try {
+        var json = fs.readFileSync(args[0]);
+      } catch(e) {
+        abort("Can't read from file \"" + args[0] + "\".");
+      }
+      addExtraOptions(options, json);
+      break;
+
+    case "--verbose":
+      options.verboseOutput = true;
+      break;
+
+    case "-v":
+    case "--version":
+      printVersion();
+      exitSuccess();
+      break;
+
     case "-h":
     case "--help":
       printHelp();
       exitSuccess();
+      break;
+
+    case "--":
+      nextArg();
       break;
 
     default:
@@ -160,37 +278,78 @@ while (args.length > 0 && isOption(args[0])) {
   nextArg();
 }
 
-if (args.length > 0) {
-  abort("No arguments are allowed.");
+switch (args.length) {
+  case 0:
+    break;
+
+  case 1:
+    // load benchmarks JSON definition list file
+    benchmarks = JSON.parse(fs.readFileSync(args[0], { encoding: 'utf8' })).benchmarks;
+    break;
+
+  default:
+    abort("Too many arguments.");
 }
 
-Runner.run(benchmarks, runCount, options, {
+Runner.run(benchmarks, {
+  runCount: runCount,
+  minimumRunTime: 250
+}, options, {
   readFile: function(file) {
     return fs.readFileSync(__dirname + "/" + file, "utf8");
   },
 
-  testStart: function(benchmark, test) {
+  testStart: function(benchmark, test, state) {
     /* Nothing to do. */
   },
 
-  testFinish: function(benchmark, test, inputSize, parseTime) {
-    writeResult(test.title, inputSize, parseTime);
+  testOneRound: function(benchmark, test, iterationIndex, parseTime, state) {
+    /* Nothing to do. */
   },
 
-  benchmarkStart: function(benchmark) {
-    writeHeading(benchmark.title);
+  testFinish: function(benchmark, test, inputSize, parseTime, state) {
+    var title = test.title;
+
+    if (state.testFailCollection.length > 0) {
+      // grab the first failure and report it:
+      var firstFailure = state.testFailCollection[0];
+
+      title += " !FAILED!";
+
+      var ex = firstFailure.failure;
+      var errMsg = ex.message;
+      var locInfo = "";
+      if (ex.line || ex.column || ex.offset) {
+        locInfo = " (line: " + ex.line + ", column: " + ex.column + " ~ offset: " + ex.offset + ")";
+      }
+      var errPreMsg = "";
+      if (ex.name) {
+        errPreMsg = ex.name + ": ";
+      }
+      var msg = errPreMsg + errMsg + locInfo;
+      console.log(msg.trim() + "\n");
+    }
+    writeResult(title, inputSize, parseTime);
   },
 
-  benchmarkFinish: function(benchmark, inputSize, parseTime) {
+  benchmarkStart: function(benchmark, state) {
+    writeHeading(benchmark.title, options);
+  },
+
+  benchmarkFinish: function(benchmark, inputSize, parseTime, state) {
     writeSeparator();
     writeResult(benchmark.title + " total", inputSize, parseTime);
-  },
 
-  start: function() {
+    if (options.collectRunTimeStatistics && state.parser && state.parser.getStatistics) {
+      statistics.report(state.parser.getStatistics(), options);
+    }
+ },
+
+  start: function(state) {
     writeTableHeader();
   },
 
-  finish: function(inputSize, parseTime) {
+  finish: function(inputSize, parseTime, state) {
     writeSeparator();
     writeResult("Total", inputSize, parseTime);
     writeTableFooter();

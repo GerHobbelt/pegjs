@@ -18,6 +18,13 @@ Features
   * Usable [from your browser](http://pegjs.org/online), from the command line,
     or via JavaScript API
 
+Clone Info
+----------
+
+This [clone](https://github.com/GerHobbelt/pegjs) contains the work done by
+[Mingun](https://github.com/Mingun/pegjs) and a patch by
+[Eric M. Cornelius](https://github.com/EricMCornelius/pegjs).
+
 Getting Started
 ---------------
 
@@ -78,7 +85,8 @@ You can tweak the generated parser with several options:
   * `--cache` — makes the parser cache results, avoiding exponential parsing
     time in pathological cases but making the parser slower
   * `--allowed-start-rules` — comma-separated list of rules the parser will be
-    allowed to start parsing from (default: the first rule in the grammar)
+    allowed to start parsing from, or * to allow all rules (default: the
+    first rule in the grammar)
   * `--plugin` — makes PEG.js use a specified plugin (can be specified multiple
     times)
   * `--extra-options` — additional options (in JSON format) to pass to
@@ -113,7 +121,7 @@ object to `PEG.buildParser`. The following options are supported:
     parsing time in pathological cases but making the parser slower (default:
     `false`)
   * `allowedStartRules` — rules the parser will be allowed to start parsing from
-    (default: the first rule in the grammar)
+    or * to allow all (default: the first rule in the grammar)
   * `output` — if set to `"parser"`, the method will return generated parser
     object; if set to `"source"`, it will return parser source code as a string
     (default: `"parser"`)
@@ -139,6 +147,7 @@ object to the `parse` method. The following options are supported:
 
   * `startRule` — name of the rule to start parsing from
   * `tracer` — tracer to use
+  * `startOffset` — start parsing the input at this position
 
 Parsers can also support their own custom options.
 
@@ -284,19 +293,40 @@ Match a subexpression and return its match result.
 #### *expression* \*
 
 Match zero or more repetitions of the expression and return their match results
-in an array. The matching is greedy, i.e. the parser tries to match the
-expression as many times as possible.
+in an array. The matching is greedy, matching the expression as many times as
+possible without backtracking.
 
 #### *expression* +
 
 Match one or more repetitions of the expression and return their match results
-in an array. The matching is greedy, i.e. the parser tries to match the
-expression as many times as possible.
+in an array. The matching is greedy, matching the expression as many times as
+possible without backtracking.
 
 #### *expression* ?
 
 Try to match the expression. If the match succeeds, return its match result,
-otherwise return `null`.
+otherwise return `null`. The matching is greedy, matching the expression as
+many times as possible without backtracking.
+
+#### *expression* |count|<br> *expression* |count,delimiter|<br> *expression* |min..max|<br> *expression* |min..max,delimiter|
+
+Match exact `count` repetitions of `expression`. If the match succeeds, return
+their match results in an array.
+
+-or-
+
+Match expression at least `min` but not more then `max` times. If the match
+succeeds, return their match results in an array. Both `min` and `max` may
+be omitted. If `min` is omitted, then it is assumed to be `0`. If `max` is
+omitted, then it is assumed to be infinity. Hence `expression |..|` is an
+equivalent of `expression |0..|` and `expression *`. `expression |1..|` is
+equivalent of `expression +`.
+
+Optionally, you can specify a delimiter by a rule reference or an arbitrary
+rule expression. The delimiter must appear between elements in the parsed
+input. The result of the delimiter expression itself will be dropped.
+
+`count`, `min` and `max` must be positive integers.
 
 #### & *expression*
 
