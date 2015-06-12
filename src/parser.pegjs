@@ -41,8 +41,6 @@
     "!": "semantic_not"
   };
 
-  var options = {};
-
   function filterEmptyStrings(array) {
     var result = [], i;
 
