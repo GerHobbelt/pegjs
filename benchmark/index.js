@@ -71,7 +71,7 @@ $("#run").click(function() {
       };
 
   if (isNaN(runCount) || runCount <= 0) {
-    alert("Number of runs must be a positive integer.");
+    window.alert("Number of runs must be a positive integer.");
     return;
   }
 

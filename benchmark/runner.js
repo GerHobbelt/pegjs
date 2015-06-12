@@ -1,4 +1,12 @@
-Runner = {
+;(function(root, factory) {
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = factory;
+  } else {
+    root.Runner = factory(root.PEG);
+  }
+}(this, function(PEG) {
+
+  return {
   run: function(benchmarks, runnerOptions, options, callbacks) {
 
     // Fix the minimumRunTime to a sensible value: >= 100 msecs
@@ -7,50 +15,50 @@ Runner = {
     // make sure the baseDir path always has a trailing dir separator (i.e. a '/' slash)
     runnerOptions.baseDir = (runnerOptions.baseDir || "../examples/").replace(/([^\/])$/, "$1/");
 
-    /* Queue */
+      /* Queue */
 
-    var Q = {
-          functions: [],
+      var Q = {
+            functions: [],
 
-          add: function(f) {
-            this.functions.push(f);
-          },
+            add: function(f) {
+              this.functions.push(f);
+            },
 
-          run: function() {
-            if (this.functions.length > 0) {
-              this.functions.shift()();
+            run: function() {
+              if (this.functions.length > 0) {
+                this.functions.shift()();
 
-              /*
-               * We can't use |arguments.callee| here because |this| would get
-               * messed-up in that case.
-               */
+                /*
+                 * We can't use |arguments.callee| here because |this| would get
+                 * messed-up in that case.
+                 */
               setTimeout(function() { 
                 Q.run(); 
               }, 1 /* do not use 0 delay but give user/observer in browser a slice of time too */);
+              }
             }
-          }
-        };
+          };
 
-    /*
-     * The benchmark itself is factored out into several functions (some of them
-     * generated), which are enqueued and run one by one using |setTimeout|. We
-     * do this for two reasons:
-     *
+      /*
+       * The benchmark itself is factored out into several functions (some of them
+       * generated), which are enqueued and run one by one using |setTimeout|. We
+       * do this for two reasons:
+       *
      *   1. To avoid browser mechanism for interrupting long-running scripts to
-     *      kick-in (or at least to not kick-in that often).
-     *
-     *   2. To ensure progressive rendering of results in the browser (some
-     *      browsers do not render at all when running JavaScript code).
-     *
-     * The enqueued functions share state, which is all stored in the properties
-     * of the |state| object.
-     */
+       *      kick-in (or at least to not kick-in that often).
+       *
+       *   2. To ensure progressive rendering of results in the browser (some
+       *      browsers do not render at all when running JavaScript code).
+       *
+       * The enqueued functions share state, which is all stored in the properties
+       * of the |state| object.
+       */
 
-    var state = {}, i, j;
+      var state = {}, i, j;
 
-    function initialize() {
-      state.totalInputSize = 0;
-      state.totalParseTime = 0;
+      function initialize() {
+        state.totalInputSize = 0;
+        state.totalParseTime = 0;
       state.totalTestFailCount = 0;
 
       callbacks.start(state);
@@ -60,10 +68,10 @@ Runner = {
       } else {
         Q.add(finalize);
       }
-    }
+      }
 
-    function benchmarkInitializer(i) {
-      return function() {
+      function benchmarkInitializer(i) {
+        return function() {
         var bench = benchmarks[i];
 
         if (bench.skip) {
@@ -85,14 +93,14 @@ Runner = {
         } else {
           Q.add(benchmarkFinalizer(i));
         }
-      };
-    }
+        };
+      }
 
     function testRunnerStart(i, j) {
-      return function() {
-        var benchmark = benchmarks[i],
-            test      = benchmark.tests[j],
-            input, parseTime, averageParseTime, k, t;
+        return function() {
+          var benchmark = benchmarks[i],
+              test      = benchmark.tests[j],
+              input, parseTime, averageParseTime, k, t;
 
         state.testInput = callbacks.readFile(benchmark.id + "/" + test.file);
         state.singleRunParseTime = [];
@@ -158,7 +166,7 @@ Runner = {
 
           t_delta = (new Date()).getTime() - t;
           //console.log("single run count adjusted: ", t_done, ", time spent: ", t_delta);
-        }
+          }
         state.singleRunParseTime[k] = t_delta / t_done;
         state.testParseTime += t_delta;
         state.runCount += t_done;
@@ -185,7 +193,7 @@ Runner = {
         var averageParseTime = state.testParseTime / state.runCount;
 
         state.benchmarkInputSize += state.testInput.length;
-        state.benchmarkParseTime += averageParseTime;
+          state.benchmarkParseTime += averageParseTime;
 
         callbacks.testFinish(benchmark, test, state.testInput.length, averageParseTime, state);
 
@@ -195,11 +203,11 @@ Runner = {
         } else {
           Q.add(benchmarkFinalizer(i));
         }
-      };
-    }
+        };
+      }
 
-    function benchmarkFinalizer(i) {
-      return function() {
+      function benchmarkFinalizer(i) {
+        return function() {
         var bench = benchmarks[i];
 
         // force skipping both the test runs and the initializer/finalizer too?
@@ -223,31 +231,33 @@ Runner = {
         } else {
           Q.add(finalize);
         }
-      };
-    }
+        };
+      }
 
-    function finalize() {
+      function finalize() {
       callbacks.finish(state.totalInputSize, state.totalParseTime, state);
-    }
+      }
 
-    /* Main */
+      /* Main */
 
-    Q.add(initialize);
+      Q.add(initialize);
 /*
-    for (i = 0; i < benchmarks.length; i++) {
-      Q.add(benchmarkInitializer(i));
-      for (j = 0; j < benchmarks[i].tests.length; j++) {
+      for (i = 0; i < benchmarks.length; i++) {
+        Q.add(benchmarkInitializer(i));
+        for (j = 0; j < benchmarks[i].tests.length; j++) {
         Q.add(testRunnerStart(i, j));
         for (var k = 0; k < runnerOptions.runCount; k++) {
           Q.add(testRunnerSingleRun(i, j, k));
         }
         Q.add(testRunnerFinish(i, j));
+        }
+        Q.add(benchmarkFinalizer(i));
       }
-      Q.add(benchmarkFinalizer(i));
-    }
-    Q.add(finalize);
+      Q.add(finalize);
 */
 
-    Q.run();
-  }
-};
+      Q.run();
+    }
+  };
+
+}));

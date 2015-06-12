@@ -1,10 +1,12 @@
 {
+  "browser":   true,
   "curly":     true,
   "eqeqeq":    true,
   "evil":      true,
   "forin":     true,
   "freeze":    true,
   "immed":     true,
+  "jquery":    true,
   "latedef":   "nofunc",
   "laxbreak":  true,
   "loopfunc":  true,
