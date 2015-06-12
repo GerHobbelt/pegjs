@@ -47,29 +47,54 @@ describe("PEG.js grammar parser", function() {
         alternatives: [actionAbcd, actionEfgh, actionIjkl, actionMnop]
       },
       named             = { type: "named",       name: "start rule", expression: literalAbcd },
-      ruleA             = { type: "rule",        name: "a",          expression: literalAbcd },
-      ruleB             = { type: "rule",        name: "b",          expression: literalEfgh },
-      ruleC             = { type: "rule",        name: "c",          expression: literalIjkl },
-      ruleStart         = { type: "rule",        name: "start",      expression: literalAbcd },
-      initializer       = { type: "initializer", code: " code " };
+      ruleA             = { type: "rule",        name: "a",          annotations: [], expression: literalAbcd },
+      ruleB             = { type: "rule",        name: "b",          annotations: [], expression: literalEfgh },
+      ruleC             = { type: "rule",        name: "c",          annotations: [], expression: literalIjkl },
+      ruleStart         = { type: "rule",        name: "start",      annotations: [], expression: literalAbcd },
+      initializer       = { type: "initializer", code: " code " },
+      options           = {
+        nil: null,
+        string: "string",
+        integer: -1,
+        float: -1.1,
+        boolean: true,
+        object: { key: "value" },
+        array: [0, "string", -1, -1.1, true, { key: "value" }]
+      };
 
   function oneRuleGrammar(expression) {
     return {
       type:        "grammar",
+      options:     {},
       initializer: null,
-      rules:       [{ type: "rule", name: "start", expression: expression }]
+      rules:       [
+        {
+          type: "rule",
+          name: "start",
+          annotations: [],
+          expression: expression
+        }
+      ]
     };
   }
 
   function actionGrammar(code) {
     return oneRuleGrammar(
-      { type: "action", expression: literalAbcd, code: code }
+      {
+        type: "action",
+        expression: literalAbcd,
+        code: code
+      }
     );
   }
 
   function literalGrammar(value, ignoreCase) {
     return oneRuleGrammar(
-      { type: "literal", value: value, ignoreCase: ignoreCase }
+      {
+        type: "literal",
+        value: value,
+        ignoreCase: ignoreCase
+      }
     );
   }
 
@@ -91,20 +116,174 @@ describe("PEG.js grammar parser", function() {
     return oneRuleGrammar({ type: "rule_ref", name: name });
   }
 
+  function rangeGrammar(min, max) {
+    return oneRuleGrammar({
+      type:       "range",
+      min:        min,
+      max:        max,
+      expression: literalAbcd,
+      delimiter:  null
+    });
+  }
+
+  function rangeGrammar2(min, max) {
+    return oneRuleGrammar({
+      type:       "range",
+      min:        min,
+      max:        max,
+      expression: literalAbcd,
+      delimiter:  literalEfgh
+    });
+  }
+
   var trivialGrammar = literalGrammar("abcd", false),
       twoRuleGrammar = {
         type:        "grammar",
+        options:     {},
         initializer: null,
         rules:       [ruleA, ruleB]
       };
+
+  var stripLocation = (function() {
+    function buildVisitor(functions) {
+      return function(node) {
+        return functions[node.type].apply(null, arguments);
+      };
+    }
+
+    function stripLeaf(node) {
+      delete node.location;
+    }
+
+    function stripExpression(node) {
+      delete node.location;
+
+      strip(node.expression);
+    }
+
+    function stripChildren(property) {
+      return function(node) {
+        var i;
+
+        delete node.location;
+
+        for (i = 0; i < node[property].length; i++) {
+          strip(node[property][i]);
+        }
+      };
+    }
+
+    var strip = buildVisitor({
+      grammar: function(node) {
+        var i;
+
+        delete node.location;
+
+        if (node.initializer) {
+          strip(node.initializer);
+        }
+
+        for (i = 0; i < node.rules.length; i++) {
+          strip(node.rules[i]);
+        }
+      },
+
+      initializer:  stripLeaf,
+      rule:         stripExpression,
+      named:        stripExpression,
+      choice:       stripChildren("alternatives"),
+      action:       stripExpression,
+      sequence:     stripChildren("elements"),
+      labeled:      stripExpression,
+      text:         stripExpression,
+      simple_and:   stripExpression,
+      simple_not:   stripExpression,
+      optional:     stripExpression,
+      zero_or_more: stripExpression,
+      one_or_more:  stripExpression,
+      semantic_and: stripLeaf,
+      semantic_not: stripLeaf,
+      rule_ref:     stripLeaf,
+      literal:      stripLeaf,
+      "class":      stripLeaf,
+      any:          stripLeaf
+    });
+
+    return strip;
+  })();
 
   beforeEach(function() {
     this.addMatchers({
       toParseAs:     function(expected) {
         var result;
 
+        function buildNodeVisitor(functions) {
+          return function(node) {
+            return functions[node.type].apply(null, arguments);
+          };
+        }
+        function rm(node) {
+          delete node.region;
+        }
+        function doInExpression(node) {
+          rm(node);
+          removeRegionKey(node.expression);
+        }
+        function doInSubnodes(propertyName) {
+          return function(node) {
+            rm(node);
+            var arr = node[propertyName] || [];
+            for (var i = 0; i < arr.length; ++i) {
+              removeRegionKey(arr[i]);
+            }
+          };
+        }
+        var removeRegionKey = buildNodeVisitor({
+          grammar:      function(node) {
+            doInSubnodes("rules")(node);
+            if (node.initializer) {
+              removeRegionKey(node.initializer);
+            }
+          },
+          initializer:  rm,
+          annotation:   rm,
+          rule:         function(node) {
+            doInSubnodes("annotations")(node);
+            doInExpression(node);
+          },
+          named:        doInExpression,
+          choice:       doInSubnodes("alternatives"),
+          action:       doInExpression,
+          sequence:     doInSubnodes("elements"),
+          labeled:      doInExpression,
+          text:         doInExpression,
+          simple_and:   doInExpression,
+          simple_not:   doInExpression,
+          semantic_and: rm,
+          semantic_not: rm,
+          optional:     doInExpression,
+          zero_or_more: doInExpression,
+          one_or_more:  doInExpression,
+          range:        function(node) {
+            rm(node);
+            removeRegionKey(node.expression);
+            if (node.delimiter) {
+              removeRegionKey(node.delimiter);
+            }
+          },
+          rule_ref:     rm,
+          literal:      rm,
+          "class":      rm,
+          any:          rm,
+          epsilon:      rm
+        });
+
         try {
           result = PEG.parser.parse(this.actual);
+          // Remove |node.region| from each node, because we don't check it there.
+          removeRegionKey(result);
+
+          stripLocation(result);
 
           this.message = function() {
             return "Expected " + jasmine.pp(this.actual) + " "
@@ -131,6 +310,8 @@ describe("PEG.js grammar parser", function() {
 
         try {
           result = PEG.parser.parse(this.actual);
+
+          stripLocation(result);
 
           this.message = function() {
             return "Expected " + jasmine.pp(this.actual) + " to fail to parse"
@@ -180,20 +361,58 @@ describe("PEG.js grammar parser", function() {
   /* Canonical Grammar is "a = \"abcd\"; b = \"efgh\"; c = \"ijkl\";". */
   it("parses Grammar", function() {
     expect('\na = "abcd";\n').toParseAs(
-      { type:  "grammar", initializer: null, rules: [ruleA] }
+      {
+        type: "grammar",
+        options: {},
+        initializer: null,
+        rules: [ruleA]
+      }
     );
     expect('\na = "abcd";\nb = "efgh";\nc = "ijkl";\n').toParseAs(
-      { type:  "grammar", initializer: null, rules: [ruleA, ruleB, ruleC] }
+      {
+        type: "grammar",
+        options: {},
+        initializer: null,
+        rules: [ruleA, ruleB, ruleC]
+      }
     );
     expect('\n{ code };\na = "abcd";\n').toParseAs(
-      { type:  "grammar", initializer: initializer, rules: [ruleA] }
+      {
+        type: "grammar",
+        options: {},
+        initializer: initializer,
+        rules: [ruleA]
+      }
+    );
+  });
+
+  /* Canonical Options is "{\"nil":null,"string":"string","integer":-1,"float":-1.1,"boolean":true,"object":{"key":"value"},"array":[0,"string",-1,-1.1,true,{"key":"value"}]}". */
+  it("parses Initializer", function() {
+    var optionsString1 = [
+      "// -*- nil: null; -*-",
+      "// -*- string: \"string\"; -*-",
+      "// -*- integer: -1; -*-",
+      "// -*- float: -1.1; -*-",
+      "// -*- boolean: true; -*-"
+    ].join("\n"),
+      optionsString2 = [
+      "// -*- object: {\"key\": \"value\" }; -*-",
+      "// -*- array: [0, \"string\", -1, -1.1, true, { \"key\": \"value\" }]; -*-"
+    ].join("\n");
+    expect(optionsString1 + '\nstart = "abcd"\n' + optionsString2).toParseAs(
+      { type:  "grammar", options: options,  initializer: null, rules: [ruleStart] }
     );
   });
 
   /* Canonical Initializer is "{ code }". */
   it("parses Initializer", function() {
     expect('{ code };start = "abcd"').toParseAs(
-      { type:  "grammar", initializer: initializer, rules: [ruleStart] }
+      {
+        type: "grammar",
+        options: {},
+        initializer: initializer,
+        rules: [ruleStart]
+      }
     );
   });
 
@@ -282,6 +501,16 @@ describe("PEG.js grammar parser", function() {
     expect('start = "abcd"?').toParseAs(oneRuleGrammar(optional));
     expect('start = "abcd"*').toParseAs(oneRuleGrammar(zeroOrMore));
     expect('start = "abcd"+').toParseAs(oneRuleGrammar(oneOrMore));
+
+    expect('start = "abcd"| .. |').toParseAs(rangeGrammar(0, null));
+    expect('start = "abcd"| ..3|').toParseAs(rangeGrammar(0,    3));
+    expect('start = "abcd"|2.. |').toParseAs(rangeGrammar(2, null));
+    expect('start = "abcd"|2..3|').toParseAs(rangeGrammar(2,    3));
+
+    expect('start = "abcd"| .. , "efgh"|').toParseAs(range2Grammar(0, null));
+    expect('start = "abcd"| ..3, "efgh"|').toParseAs(range2Grammar(0,    3));
+    expect('start = "abcd"|2.. , "efgh"|').toParseAs(range2Grammar(2, null));
+    expect('start = "abcd"|2..3, "efgh"|').toParseAs(range2Grammar(2,    3));
   });
 
   /* Canonical PrimaryExpression is "\"abcd\"". */
@@ -292,6 +521,82 @@ describe("PEG.js grammar parser", function() {
     expect('start = a'           ).toParseAs(ruleRefGrammar("a"));
     expect('start = &{ code }'   ).toParseAs(oneRuleGrammar(semanticAnd));
     expect('start = (\n"abcd"\n)').toParseAs(trivialGrammar);
+  });
+
+  /* Canonical RangeExpression is "\"abcd\"|2..3|". */
+  describe("parses RangeExpression", function() {
+    it("without delimiter", function() {
+      var grammar = rangeGrammar(2, 3);
+      expect('start = "abcd"|2..3|'  ).toParseAs(grammar);
+      expect('start = "abcd"\n|2..3|').toParseAs(grammar);
+      expect('start = "abcd"|\n2..3|').toParseAs(grammar);
+      expect('start = "abcd"|2\n..3|').toParseAs(grammar);
+      expect('start = "abcd"|2..\n3|').toParseAs(grammar);
+      expect('start = "abcd"|2..3\n|').toParseAs(grammar);
+
+      grammar = rangeGrammar(3, 3);
+      expect('start = "abcd"\n|3|').toParseAs(grammar);
+      expect('start = "abcd"|\n3|').toParseAs(grammar);
+      expect('start = "abcd"|3\n|').toParseAs(grammar);
+    });
+
+    it("with delimiter", function() {
+      var grammar = rangeGrammar2(2, 3);
+      expect('start = "abcd"|2..3,"efgh"|'  ).toParseAs(grammar);
+      expect('start = "abcd"\n|2..3,"efgh"|').toParseAs(grammar);
+      expect('start = "abcd"|\n2..3,"efgh"|').toParseAs(grammar);
+      expect('start = "abcd"|2\n..3,"efgh"|').toParseAs(grammar);
+      expect('start = "abcd"|2..\n3,"efgh"|').toParseAs(grammar);
+      expect('start = "abcd"|2..3\n,"efgh"|').toParseAs(grammar);
+      expect('start = "abcd"|2..3,\n"efgh"|').toParseAs(grammar);
+      expect('start = "abcd"|2..3,"efgh"\n|').toParseAs(grammar);
+
+      grammar = rangeGrammar2(3, 3);
+      expect('start = "abcd"\n|3,"efgh"|').toParseAs(grammar);
+      expect('start = "abcd"|\n3,"efgh"|').toParseAs(grammar);
+      expect('start = "abcd"|3\n,"efgh"|').toParseAs(grammar);
+      expect('start = "abcd"|3,\n"efgh"|').toParseAs(grammar);
+      expect('start = "abcd"|3,"efgh"\n|').toParseAs(grammar);
+    });
+  });
+
+  /* Canonical RangeOperator is "|2..3|". */
+  describe("parses RangeOperator", function() {
+    it("without delimiter", function() {
+      expect('start = "abcd"| .. |').toParseAs(rangeGrammar(0, null));
+      expect('start = "abcd"|0.. |').toParseAs(rangeGrammar(0, null));
+      expect('start = "abcd"|1.. |').toParseAs(rangeGrammar(1, null));
+      expect('start = "abcd"|2.. |').toParseAs(rangeGrammar(2, null));
+
+      expect('start = "abcd"| ..1|').toParseAs(rangeGrammar(0, 1));
+      expect('start = "abcd"| ..2|').toParseAs(rangeGrammar(0, 2));
+
+      expect('start = "abcd"|2..2|').toParseAs(rangeGrammar(2, 2));
+      expect('start = "abcd"|2..3|').toParseAs(rangeGrammar(2, 3));
+      expect('start = "abcd"|3|').toParseAs(rangeGrammar(3, 3));
+
+      expect('start = "abcd"| ..0|').toFailToParse();
+      expect('start = "abcd"|0..0|').toFailToParse();
+      expect('start = "abcd"|0|').toFailToParse();
+    });
+
+    it("with delimiter", function() {
+      expect('start = "abcd"| .. , "efgh"|').toParseAs(rangeGrammar2(0, null));
+      expect('start = "abcd"|0.. , "efgh"|').toParseAs(rangeGrammar2(0, null));
+      expect('start = "abcd"|1.. , "efgh"|').toParseAs(rangeGrammar2(1, null));
+      expect('start = "abcd"|2.. , "efgh"|').toParseAs(rangeGrammar2(2, null));
+
+      expect('start = "abcd"| ..1, "efgh"|').toParseAs(rangeGrammar2(0, 1));
+      expect('start = "abcd"| ..2, "efgh"|').toParseAs(rangeGrammar2(0, 2));
+
+      expect('start = "abcd"|2..2, "efgh"|').toParseAs(rangeGrammar2(2, 2));
+      expect('start = "abcd"|2..3, "efgh"|').toParseAs(rangeGrammar2(2, 3));
+      expect('start = "abcd"|3   , "efgh"|').toParseAs(rangeGrammar2(3, 3));
+
+      expect('start = "abcd"| ..0, "efgh"|').toFailToParse();
+      expect('start = "abcd"|0..0, "efgh"|').toFailToParse();
+      expect('start = "abcd"|0   , "efgh"|').toFailToParse();
+    });
   });
 
   /* Canonical RuleReferenceExpression is "a". */
@@ -417,13 +722,13 @@ describe("PEG.js grammar parser", function() {
 
   /* Canonical StringLiteral is "\"abcd\"". */
   it("parses StringLiteral", function() {
-    expect('start = ""'    ).toParseAs(literalGrammar("",    false));
-    expect('start = "a"'   ).toParseAs(literalGrammar("a",   false));
-    expect('start = "abc"' ).toParseAs(literalGrammar("abc", false));
+    expect('start = ""'   ).toParseAs(literalGrammar("",    false));
+    expect('start = "a"'  ).toParseAs(literalGrammar("a",   false));
+    expect('start = "abc"').toParseAs(literalGrammar("abc", false));
 
-    expect("start = ''"    ).toParseAs(literalGrammar("",    false));
-    expect("start = 'a'"   ).toParseAs(literalGrammar("a",   false));
-    expect("start = 'abc'" ).toParseAs(literalGrammar("abc", false));
+    expect("start = ''"   ).toParseAs(literalGrammar("",    false));
+    expect("start = 'a'"  ).toParseAs(literalGrammar("a",   false));
+    expect("start = 'abc'").toParseAs(literalGrammar("abc", false));
   });
 
   /* Canonical DoubleStringCharacter is "a". */
@@ -503,6 +808,12 @@ describe("PEG.js grammar parser", function() {
     );
     expect('start = [\\\n]').toParseAs(
       classGrammar([], false, false, "[\\\n]")
+    );
+    expect('start = [\\d]' ).toParseAs(
+      classGrammar(["\\d"], false, false, "[\\d]")
+    );
+    expect('start = [\\\\d]').toParseAs(
+      classGrammar(["\\", "d"], false, false, "[\\\\d]")
     );
 
     expect('start = []]' ).toFailToParse();
@@ -592,6 +903,27 @@ describe("PEG.js grammar parser", function() {
     expect('start = "abcd" {}}').toFailToParse();
   });
 
+  /* Annotations */
+  it("parses Annotations", function() {
+    var grammar = oneRuleGrammar(literalAbcd);
+    grammar.rules[0].annotations.push({ type: 'annotation', name: 'Annotation', params: [] });
+    expect('@Annotation start = "abcd"').toParseAs(grammar);
+    expect('@Annotation\nstart = "abcd"').toParseAs(grammar);
+    expect('@Annotation()start = "abcd"').toParseAs(grammar);
+
+    grammar.rules[0].annotations.push({ type: 'annotation', name: 'Annotation2', params: [] });
+    expect('@Annotation @Annotation2 start = "abcd"').toParseAs(grammar);
+    expect('@Annotation\n@Annotation2 start = "abcd"').toParseAs(grammar);
+    expect('@Annotation()@Annotation2 start = "abcd"').toParseAs(grammar);
+
+    grammar.rules[0].annotations = [{ type: 'annotation', name: 'Annotation', params: ['a'] }];
+    expect('@Annotation(a) start = "abcd"').toParseAs(grammar);
+
+    grammar.rules[0].annotations = [{ type: 'annotation', name: 'Annotation', params: ['a', 'b'] }];
+    expect('@Annotation(a,b)start = "abcd"').toParseAs(grammar);
+    expect('@Annotation(a,b,)start = "abcd"').toParseAs(grammar);
+  });
+
   /* Unicode character category rules and token rules are not tested. */
 
   /* Canonical __ is "\n". */
@@ -623,4 +955,75 @@ describe("PEG.js grammar parser", function() {
   it("parses EOF", function() {
     expect('start = "abcd"\n').toParseAs(trivialGrammar);
   });
+
+  /* Annotations */
+  it("parses annotations", function() {
+    var grammar = oneRuleGrammar(literalAbcd);
+    grammar.rules[0].annotations.push({ type: 'annotation', name: 'Annotation', params: [] });
+    expect('@Annotation start = "abcd"').toParseAs(grammar);
+    expect('@Annotation\nstart = "abcd"').toParseAs(grammar);
+    expect('@Annotation()start = "abcd"').toParseAs(grammar);
+
+    grammar.rules[0].annotations.push({ type: 'annotation', name: 'Annotation2', params: [] });
+    expect('@Annotation @Annotation2 start = "abcd"').toParseAs(grammar);
+    expect('@Annotation\n@Annotation2 start = "abcd"').toParseAs(grammar);
+    expect('@Annotation()@Annotation2 start = "abcd"').toParseAs(grammar);
+
+    grammar.rules[0].annotations = [{ type: 'annotation', name: 'Annotation', params: ['a'] }];
+    expect('@Annotation(a) start = "abcd"').toParseAs(grammar);
+
+    grammar.rules[0].annotations = [{ type: 'annotation', name: 'Annotation', params: ['a', 'b'] }];
+    expect('@Annotation(a,b)start = "abcd"').toParseAs(grammar);
+    expect('@Annotation(a,b,)start = "abcd"').toParseAs(grammar);
+  });
+
+  /* Rule wildcards: ranges */
+  it("parses ranges for rules", function() {
+    expect('start = "abcd"| ..3|').toParseAs(oneRuleGrammar({
+      type:       "range",
+      min:        0,
+      max:        3,
+      expression: literalAbcd,
+      delimiter:  null
+    }));
+    expect('start = "abcd"|2.. |').toParseAs(oneRuleGrammar({
+      type:       "range",
+      min:        2,
+      max:        null,
+      expression: literalAbcd,
+      delimiter:  null
+    }));
+    expect('start = "abcd"|2..3|').toParseAs(oneRuleGrammar({
+      type:       "range",
+      min:        2,
+      max:        3,
+      expression: literalAbcd,
+      delimiter:  null
+    }));
+    expect('start = "abcd"| ..3, "efgh"|').toParseAs(oneRuleGrammar({
+      type:       "range",
+      min:        0,
+      max:        3,
+      expression: literalAbcd,
+      delimiter:  literalEfgh
+    }));
+    expect('start = "abcd"|2.. , "efgh"|').toParseAs(oneRuleGrammar({
+      type:       "range",
+      min:        2,
+      max:        null,
+      expression: literalAbcd,
+      delimiter:  literalEfgh
+    }));
+    expect('start = "abcd"|2..3, "efgh"|').toParseAs(oneRuleGrammar({
+      type:       "range",
+      min:        2,
+      max:        3,
+      expression: literalAbcd,
+      delimiter:  literalEfgh
+    }));
+    expect('start = "abcd"' ).toParseAs(literalGrammar("abcd", false));
+  });
+
+
 });
+

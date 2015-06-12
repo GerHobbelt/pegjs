@@ -63,7 +63,7 @@ start
 
 stylesheet
   = charset:(CHARSET_SYM STRING ";")? (S / CDO / CDC)*
-    imports:(import (CDO S* / CDC S*)*)*
+    imports:(import_at (CDO S* / CDC S*)*)*
     rules:((ruleset / media / page) (CDO S* / CDC S*)*)*
     {
       return {
@@ -74,7 +74,7 @@ stylesheet
       };
     }
 
-import
+import_at
   = IMPORT_SYM S* href:(STRING / URI) S* media:media_list? ";" S* {
       return {
         type:  "ImportRule",
@@ -161,14 +161,14 @@ selector
   / selector:simple_selector S* { return selector; }
 
 simple_selector
-  = element:element_name qualifiers:(id / class / attrib / pseudo)* {
+  = element:element_name qualifiers:(id / css_class / attrib / pseudo)* {
       return {
         type:       "SimpleSelector",
         element:    element,
         qualifiers: qualifiers
       };
     }
-  / qualifiers:(id / class / attrib / pseudo)+ {
+  / qualifiers:(id / css_class / attrib / pseudo)+ {
       return {
         type:       "SimpleSelector",
         element:    "*",
@@ -179,7 +179,7 @@ simple_selector
 id
   = id:HASH { return { type: "IDSelector", id: id }; }
 
-class
+css_class
   = "." class_:IDENT { return { type: "ClassSelector", class: class_ }; }
 
 element_name
@@ -242,11 +242,11 @@ term
     }
   / value:STRING S* { return { type: "String", value: value }; }
   / value:URI S*    { return { type: "URI",    value: value }; }
-  / function
+  / css_function
   / hexcolor
   / value:IDENT S*  { return { type: "Ident",  value: value }; }
 
-function
+css_function
   = name:FUNCTION S* params:expr ")" S* {
       return { type: "Function", name: name, params: params };
     }
@@ -296,6 +296,9 @@ string2
 comment
   = "/*" [^*]* "*"+ ([^/*] [^*]* "*"+)* "/"
 
+comments
+  = comment*
+
 ident
   = prefix:$"-"? start:nmstart chars:nmchar* {
       return prefix + start + chars.join("");
@@ -329,103 +332,121 @@ nl
   / "\f"
 
 A  = "a"i / "\\" "0"? "0"? "0"? "0"? [\x41\x61] ("\r\n" / [ \t\r\n\f])? { return "a"; }
+
 C  = "c"i / "\\" "0"? "0"? "0"? "0"? [\x43\x63] ("\r\n" / [ \t\r\n\f])? { return "c"; }
+
 D  = "d"i / "\\" "0"? "0"? "0"? "0"? [\x44\x64] ("\r\n" / [ \t\r\n\f])? { return "d"; }
+
 E  = "e"i / "\\" "0"? "0"? "0"? "0"? [\x45\x65] ("\r\n" / [ \t\r\n\f])? { return "e"; }
+
 G  = "g"i / "\\" "0"? "0"? "0"? "0"? [\x47\x67] ("\r\n" / [ \t\r\n\f])? / "\\g"i { return "g"; }
+
 H  = "h"i / "\\" "0"? "0"? "0"? "0"? [\x48\x68] ("\r\n" / [ \t\r\n\f])? / "\\h"i { return "h"; }
+
 I  = "i"i / "\\" "0"? "0"? "0"? "0"? [\x49\x69] ("\r\n" / [ \t\r\n\f])? / "\\i"i { return "i"; }
+
 K  = "k"i / "\\" "0"? "0"? "0"? "0"? [\x4b\x6b] ("\r\n" / [ \t\r\n\f])? / "\\k"i { return "k"; }
+
 L  = "l"i / "\\" "0"? "0"? "0"? "0"? [\x4c\x6c] ("\r\n" / [ \t\r\n\f])? / "\\l"i { return "l"; }
+
 M  = "m"i / "\\" "0"? "0"? "0"? "0"? [\x4d\x6d] ("\r\n" / [ \t\r\n\f])? / "\\m"i { return "m"; }
+
 N  = "n"i / "\\" "0"? "0"? "0"? "0"? [\x4e\x6e] ("\r\n" / [ \t\r\n\f])? / "\\n"i { return "n"; }
+
 O  = "o"i / "\\" "0"? "0"? "0"? "0"? [\x4f\x6f] ("\r\n" / [ \t\r\n\f])? / "\\o"i { return "o"; }
+
 P  = "p"i / "\\" "0"? "0"? "0"? "0"? [\x50\x70] ("\r\n" / [ \t\r\n\f])? / "\\p"i { return "p"; }
+
 R  = "r"i / "\\" "0"? "0"? "0"? "0"? [\x52\x72] ("\r\n" / [ \t\r\n\f])? / "\\r"i { return "r"; }
+
 S_ = "s"i / "\\" "0"? "0"? "0"? "0"? [\x53\x73] ("\r\n" / [ \t\r\n\f])? / "\\s"i { return "s"; }
+
 T  = "t"i / "\\" "0"? "0"? "0"? "0"? [\x54\x74] ("\r\n" / [ \t\r\n\f])? / "\\t"i { return "t"; }
+
 U  = "u"i / "\\" "0"? "0"? "0"? "0"? [\x55\x75] ("\r\n" / [ \t\r\n\f])? / "\\u"i { return "u"; }
+
 X  = "x"i / "\\" "0"? "0"? "0"? "0"? [\x58\x78] ("\r\n" / [ \t\r\n\f])? / "\\x"i { return "x"; }
+
 Z  = "z"i / "\\" "0"? "0"? "0"? "0"? [\x5a\x7a] ("\r\n" / [ \t\r\n\f])? / "\\z"i { return "z"; }
 
 /* Tokens */
 
 S "whitespace"
-  = comment* s
+  = comments s
 
 CDO "<!--"
-  = comment* "<!--"
+  = comments "<!--"
 
 CDC "-->"
-  = comment* "-->"
+  = comments "-->"
 
 INCLUDES "~="
-  = comment* "~="
+  = comments "~="
 
 DASHMATCH "|="
-  = comment* "|="
+  = comments "|="
 
 STRING "string"
-  = comment* string:string { return string; }
+  = comments string:string { return string; }
 
 IDENT "identifier"
-  = comment* ident:ident { return ident; }
+  = comments ident:ident { return ident; }
 
 HASH "hash"
-  = comment* "#" name:name { return "#" + name; }
+  = comments "#" name:name { return "#" + name; }
 
 IMPORT_SYM "@import"
-  = comment* "@" I M P O R T
+  = comments "@" I M P O R T
 
 PAGE_SYM "@page"
-  = comment* "@" P A G E
+  = comments "@" P A G E
 
 MEDIA_SYM "@media"
-  = comment* "@" M E D I A
+  = comments "@" M E D I A
 
 CHARSET_SYM "@charset"
-  = comment* "@charset "
+  = comments "@charset "
 
 /* We use |s| instead of |w| here to avoid infinite recursion. */
 IMPORTANT_SYM "!important"
-  = comment* "!" (s / comment)* I M P O R T A N T
+  = comments "!" (s / comment)* I M P O R T A N T
 
 EMS "length"
-  = comment* value:num E M { return { value: value, unit: "em" }; }
+  = comments value:num E M { return { value: value, unit: "em" }; }
 
 EXS "length"
-  = comment* value:num E X { return { value: value, unit: "ex" }; }
+  = comments value:num E X { return { value: value, unit: "ex" }; }
 
 LENGTH "length"
-  = comment* value:num P X { return { value: value, unit: "px" }; }
-  / comment* value:num C M { return { value: value, unit: "cm" }; }
-  / comment* value:num M M { return { value: value, unit: "mm" }; }
-  / comment* value:num I N { return { value: value, unit: "in" }; }
-  / comment* value:num P T { return { value: value, unit: "pt" }; }
-  / comment* value:num P C { return { value: value, unit: "pc" }; }
+  = comments value:num P X { return { value: value, unit: "px" }; }
+  / comments value:num C M { return { value: value, unit: "cm" }; }
+  / comments value:num M M { return { value: value, unit: "mm" }; }
+  / comments value:num I N { return { value: value, unit: "in" }; }
+  / comments value:num P T { return { value: value, unit: "pt" }; }
+  / comments value:num P C { return { value: value, unit: "pc" }; }
 
 ANGLE "angle"
-  = comment* value:num D E G   { return { value: value, unit: "deg"  }; }
-  / comment* value:num R A D   { return { value: value, unit: "rad"  }; }
-  / comment* value:num G R A D { return { value: value, unit: "grad" }; }
+  = comments value:num D E G   { return { value: value, unit: "deg"  }; }
+  / comments value:num R A D   { return { value: value, unit: "rad"  }; }
+  / comments value:num G R A D { return { value: value, unit: "grad" }; }
 
 TIME "time"
-  = comment* value:num M S_ { return { value: value, unit: "ms" }; }
-  / comment* value:num S_   { return { value: value, unit: "s"  }; }
+  = comments value:num M S_ { return { value: value, unit: "ms" }; }
+  / comments value:num S_   { return { value: value, unit: "s"  }; }
 
 FREQ "frequency"
-  = comment* value:num H Z   { return { value: value, unit: "hz" }; }
-  / comment* value:num K H Z { return { value: value, unit: "kh" }; }
+  = comments value:num H Z   { return { value: value, unit: "hz" }; }
+  / comments value:num K H Z { return { value: value, unit: "kh" }; }
 
 PERCENTAGE "percentage"
-  = comment* value:num "%" { return { value: value, unit: "%" }; }
+  = comments value:num "%" { return { value: value, unit: "%" }; }
 
 NUMBER "number"
-  = comment* value:num { return { value: value, unit: null }; }
+  = comments value:num { return { value: value, unit: null }; }
 
 URI "uri"
-  = comment* U R L "("i w url:string w ")" { return url; }
-  / comment* U R L "("i w url:url w ")"    { return url; }
+  = comments U R L "("i w url:string w ")" { return url; }
+  / comments U R L "("i w url:url w ")"    { return url; }
 
 FUNCTION "function"
-  = comment* name:ident "(" { return name; }
+  = comments name:ident "(" { return name; }

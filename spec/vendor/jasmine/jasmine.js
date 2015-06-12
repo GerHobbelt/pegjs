@@ -173,7 +173,7 @@ jasmine.isA_ = function(typeName, value) {
 };
 
 /**
- * Pretty printer for expecations.  Takes any object and turns it into a human-readable string.
+ * Pretty printer for expectations.  Takes any object and turns it into a human-readable string.
  *
  * @param value {Object} an object to be outputted
  * @returns {String}
@@ -1977,14 +1977,15 @@ jasmine.StringPrettyPrinter.prototype.emitObject = function(obj) {
   }
 
   var self = this;
-  this.append('{ ');
+  this.append('{\n');
   var first = true;
 
   this.iterateObject(obj, function(property, isGetter) {
     if (first) {
       first = false;
+      self.append('  ');
     } else {
-      self.append(', ');
+      self.append(',\n  ');
     }
 
     self.append(property);
@@ -1996,7 +1997,7 @@ jasmine.StringPrettyPrinter.prototype.emitObject = function(obj) {
     }
   });
 
-  this.append(' }');
+  this.append('\n}');
 };
 
 jasmine.StringPrettyPrinter.prototype.append = function(value) {

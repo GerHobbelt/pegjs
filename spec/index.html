@@ -7,12 +7,21 @@
     <script src="vendor/jasmine/jasmine-html.js"></script>
     <script src="../browser/peg-0.8.0.js"></script>
     <script src="helpers.js"></script>
-    <script src="parser.spec.js"></script>
-    <script src="generated-parser.spec.js"></script>
-    <script src="compiler/passes/report-missing-rules.spec.js"></script>
-    <script src="compiler/passes/report-left-recursion.spec.js"></script>
-    <script src="compiler/passes/remove-proxy-rules.spec.js"></script>
-    <script src="compiler/passes/generate-bytecode.spec.js"></script>
+    <script src="unit/parser.spec.js"></script>
+    <script src="unit/compiler/passes/helpers.js"></script>
+    <script src="unit/compiler/passes/report-missing-rules.spec.js"></script>
+    <script src="unit/compiler/passes/report-unused-rules.spec.js"></script>
+    <script src="unit/compiler/passes/report-redefined-rules.spec.js"></script>
+    <script src="unit/compiler/passes/report-duplicate-rules.spec.js"></script>
+    <script src="unit/compiler/passes/report-duplicate-labels.spec.js"></script>
+    <script src="unit/compiler/passes/report-left-recursion.spec.js"></script>
+    <script src="unit/compiler/passes/report-infinite-loops.spec.js"></script>
+    <script src="unit/compiler/passes/remove-proxy-rules.spec.js"></script>
+    <script src="unit/compiler/passes/generate-bytecode.spec.js"></script>
+    <script src="api/pegjs-api.spec.js"></script>
+    <script src="api/plugin-api.spec.js"></script>
+    <script src="api/generated-parser-api.spec.js"></script>
+    <script src="behavior/generated-parser-behavior.spec.js"></script>
     <script>
       (function() {
         var env      = jasmine.getEnv(),
@@ -21,7 +30,7 @@
         env.addReporter(reporter);
         env.specFilter = reporter.specFilter;
 
-        window.onload = function() { env.execute(); }
+        window.onload = function() { env.execute(); };
       })();
     </script>
   </head>

@@ -2,7 +2,7 @@
   "name":            "pegjs",
   "version":         "0.8.0",
   "description":     "Parser generator for JavaScript",
-  "homepage":        "http://pegjs.majda.cz/",
+  "homepage":        "http://pegjs.org/",
   "author":          {
     "name":  "David Majda",
     "email": "david@majda.cz",
@@ -25,9 +25,14 @@
     "lib/compiler/visitor.js",
     "lib/compiler/passes/generate-bytecode.js",
     "lib/compiler/passes/generate-javascript.js",
+    "lib/compiler/passes/report-redefined-rules.js",
+    "lib/compiler/passes/report-duplicate-rules.js",
+    "lib/compiler/passes/report-duplicate-labels.js",
     "lib/compiler/passes/remove-proxy-rules.js",
     "lib/compiler/passes/report-left-recursion.js",
+    "lib/compiler/passes/report-infinite-loops.js",
     "lib/compiler/passes/report-missing-rules.js",
+    "lib/compiler/passes/report-unused-rules.js",
     "lib/grammar-error.js",
     "lib/parser.js",
     "lib/peg.js",
@@ -38,19 +43,20 @@
   ],
   "main":            "lib/peg",
   "bin":             "bin/pegjs",
+  "license":         "MIT",
   "scripts":         {
-    "test": "make spec"
+    "test": "make hint && make spec"
   },
   "repository":      {
     "type": "git",
-    "url":  "http://github.com/dmajda/pegjs.git"
+    "url":  "http://github.com/pegjs/pegjs.git"
   },
   "devDependencies": {
-    "jasmine-node": "= 1.11.0",
-    "uglify-js":    "= 2.4.7",
-    "jshint":       "= 2.3.0"
+    "jasmine-node": ">=1.14.5",
+    "uglify-js":    ">=2.4.23",
+    "jshint":       ">=2.8.0"
   },
   "engines":         {
-    "node": ">= 0.8"
+    "node": ">= 0.10.0"
   }
 }

@@ -1,144 +1,45 @@
-describe("generated parser", function() {
-  function vary(names, block) {
-    var values = {
-          cache:    [false, true],
-          optimize: ["speed", "size"]
-        };
+// WARNING: this is the OLD, OBSOLETED spec file; the new copy exists in ../../spec/behavior/generated-parser-behavior.spec.js
 
-    function varyStep(names, options) {
-      var clonedOptions = {}, key, name, i;
+describe("generated parser behavior", function() {
+  function varyOptimizationOptions(block) {
+    function clone(object) {
+      var result = {}, key;
 
-      if (names.length === 0) {
-        /*
-         * We have to clone the options so that the block can save them safely
-         * (e.g. by capturing in a closure) without the risk that they will be
-         * changed later.
-         */
-        for (key in options) {
-          if (options.hasOwnProperty(key)) {
-            clonedOptions[key] = options[key];
-          }
-        }
-
-        describe(
-          "with options " + jasmine.pp(clonedOptions),
-          function() { block(clonedOptions); }
-        );
-      } else {
-        name = names[0];
-        for (i = 0; i < values[name].length; i++) {
-          options[name] = values[name][i];
-          varyStep(names.slice(1), options);
+      for (key in object) {
+        if (object.hasOwnProperty(key)) {
+          result[key] = object[key];
         }
       }
+
+      return result;
     }
 
-    varyStep(names, {});
-  }
+    var optionsVariants = [
+          { cache: false, optimize: "speed" },
+          { cache: false, optimize: "size"  },
+          { cache: true,  optimize: "speed" },
+          { cache: true,  optimize: "size"  },
+        ],
+        i;
 
-  function varyAll(block) {
-    vary(["cache", "optimize"], block);
-  }
-
-  beforeEach(function() {
-    this.addMatchers({
-      toParse: function(input) {
-        var options  = arguments.length > 2 ? arguments[1] : {},
-            expected = arguments[arguments.length - 1],
-            result;
-
-        try {
-          result = this.actual.parse(input, options);
-
-          this.message = function() {
-            return "Expected " + jasmine.pp(input) + " "
-                 + "with options " + jasmine.pp(options) + " "
-                 + (this.isNot ? "not " : "")
-                 + "to parse as " + jasmine.pp(expected) + ", "
-                 + "but it parsed as " + jasmine.pp(result) + ".";
-          };
-
-          return this.env.equals_(result, expected);
-        } catch (e) {
-          this.message = function() {
-            return "Expected " + jasmine.pp(input) + " "
-                 + "with options " + jasmine.pp(options) + " "
-                 + "to parse as " + jasmine.pp(expected) + ", "
-                 + "but it failed to parse with message "
-                 + jasmine.pp(e.message) + ".";
-          };
-
-          return false;
+    for (i = 0; i < optionsVariants.length; i++) {
+      describe(
+        "with options " + jasmine.pp(optionsVariants[i]),
+        function() { 
+          block(clone(optionsVariants[i])); 
         }
-      },
-
-      toFailToParse: function(input) {
-        var options = arguments.length > 2 ? arguments[1] : {},
-            details = arguments.length > 1
-                        ? arguments[arguments.length - 1]
-                        : undefined,
-            result;
-
-        try {
-          result = this.actual.parse(input, options);
-
-          this.message = function() {
-            return "Expected " + jasmine.pp(input) + " "
-                 + "with options " + jasmine.pp(options) + " "
-                 + "to fail to parse"
-                 + (details ? " with details " + jasmine.pp(details) : "") + ", "
-                 + "but it parsed as " + jasmine.pp(result) + ".";
-          };
-
-          return false;
-        } catch (e) {
-          /*
-           * Should be at the top level but then JSHint complains about bad for
-           * in variable.
-           */
-          var key;
-
-          if (this.isNot) {
-            this.message = function() {
-              return "Expected " + jasmine.pp(input)
-                   + "with options " + jasmine.pp(options) + " "
-                   + "to parse, "
-                   + "but it failed with message "
-                   + jasmine.pp(e.message) + ".";
-            };
-          } else {
-            if (details) {
-              for (key in details) {
-                if (details.hasOwnProperty(key)) {
-                  if (!this.env.equals_(e[key], details[key])) {
-                    this.message = function() {
-                      return "Expected " + jasmine.pp(input) + " "
-                           + "with options " + jasmine.pp(options) + " "
-                           + "to fail to parse"
-                           + (details ? " with details " + jasmine.pp(details) : "") + ", "
-                           + "but " + jasmine.pp(key) + " "
-                           + "is " + jasmine.pp(e[key]) + ".";
-                    };
-
-                    return false;
-                  }
-                }
-              }
-            }
-          }
-
-          return true;
-        }
-      }
-    });
-  });
+      );
+    }
+  }
 
   describe("parse", function() {
-    var parser = PEG.buildParser([
-          'a = "x" { return "a"; }',
-          'b = "x" { return "b"; }',
-          'c = "x" { return "c"; }'
-        ].join("\n"), { allowedStartRules: ["b", "c"] });
+    var grammar = [
+      'a = "x" { return "a"; }',
+      'b = "x" { return "b"; }',
+      'c = "x" { return "c"; }'
+    ].join("\n"),
+        parser = PEG.buildParser(grammar, { allowedStartRules: ["b", "c"] }),
+        parserAll = PEG.buildParser(grammar, { allowedStartRules: "*" });
 
     describe("start rule", function() {
       describe("without the |startRule| option", function() {
@@ -162,9 +63,38 @@ describe("generated parser", function() {
         });
       });
     });
+
+    describe("wildcard start rule", function() {
+      it("uses any rule", function() {
+        expect(parserAll).toParse("x", { startRule: "a" }, "a");
+        expect(parserAll).toParse("x", { startRule: "b" }, "b");
+        expect(parserAll).toParse("x", { startRule: "c" }, "c");
+      });
+    });
   });
 
-  varyAll(function(options) {
+  describe("parse", function() {
+    var parser = PEG.buildParser([
+          'a = "ab" { return "ab"; }',
+          '  / "b" { return "b"; }'
+        ].join("\n"));
+
+    describe("start offset", function() {
+      describe("without the |startOffset| option", function() {
+        it("starts at the beginning", function() {
+          expect(parser).toParse("ab", "ab");
+        });
+      });
+
+      describe("when the |startOffset| option specifies a position", function() {
+        it("starts at the offset", function() {
+          expect(parser).toParse("ab", { startOffset: 1 }, "b");
+        });
+      });
+    });
+  });
+
+  varyOptimizationOptions(function(options) {
     describe("initializer code", function() {
       it("runs before the parsing begins", function() {
         var parser = PEG.buildParser([
@@ -244,16 +174,22 @@ describe("generated parser", function() {
     });
 
     describe("named matching", function() {
-      var parser = PEG.buildParser('start "start" = "a"');
+      var parser = PEG.buildParser('start "start" = "a" start2; start2 "start2" = "a"');
 
       it("delegates to the expression", function() {
-        expect(parser).toParse("a", "a");
+        expect(parser).toParse("aa", ["a", "a"]);
         expect(parser).toFailToParse("b");
       });
 
       it("overwrites expected string on failure", function() {
         expect(parser).toFailToParse("b", {
           expected: [{ type: "other", description: "start" }]
+        });
+      });
+
+      it("overwrites expected string on failure of a subrule", function() {
+        expect(parser).toFailToParse("ab", {
+          expected: [{ type: "other", description: "start2" }]
         });
       });
     });
@@ -317,7 +253,7 @@ describe("generated parser", function() {
               'thing  = digit / mark',
               'digit  = [0-9]',
               'mark   = "x" { result = [line(), column()]; }',
-              'nl     = ("\\r" / "\\n" / "\\u2028" / "\\u2029")'
+              'nl     = [\\r"\\n\\u2028\\u2029]'
             ].join("\n"), options);
 
         expect(parser).toParse("1\n2\n\n3\n\n\n4 5 x", [7, 5]);
@@ -402,7 +338,13 @@ describe("generated parser", function() {
     });
 
     describe("sequence matching", function() {
-      it("matches correctly", function() {
+      it("does not accept an empty rule", function() {
+        expect(function () {
+          var parser = PEG.buildParser('start = ', options);
+        }).toThrow('Expected "!", "$", "&", "(", ".", character class, comment, end of line, identifier, literal or whitespace but end of input found.');
+      });
+
+      it("matches non-empty sequence correctly", function() {
         var parser = PEG.buildParser('start = "a" "b" "c"', options);
 
         expect(parser).toParse("abc", ["a", "b", "c"]);
@@ -703,6 +645,208 @@ describe("generated parser", function() {
       });
     });
 
+    describe("range matching", function() {
+      describe("without delimiter", function() {
+        it("| .. | matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|..|', options);
+
+          expect(parser).toParse("",   []);
+          expect(parser).toParse("a",   ["a"]);
+          expect(parser).toParse("aa",  ["a", "a"]);
+          expect(parser).toParse("aaa", ["a", "a", "a"]);
+        });
+
+        it("|0.. | matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|0..|', options);
+
+          expect(parser).toParse("",   []);
+          expect(parser).toParse("a",   ["a"]);
+          expect(parser).toParse("aa",  ["a", "a"]);
+          expect(parser).toParse("aaa", ["a", "a", "a"]);
+        });
+
+        it("|1.. | matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|1..|', options);
+
+          expect(parser).toFailToParse("");
+          expect(parser).toParse("a",   ["a"]);
+          expect(parser).toParse("aa",  ["a", "a"]);
+          expect(parser).toParse("aaa", ["a", "a", "a"]);
+        });
+
+        it("|2.. | matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|2..|', options);
+
+          expect(parser).toFailToParse("");
+          expect(parser).toFailToParse("a");
+          expect(parser).toParse("aa",  ["a", "a"]);
+          expect(parser).toParse("aaa", ["a", "a", "a"]);
+        });
+
+        it("| ..1| matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|..1|', options);
+
+          expect(parser).toParse("",    []);
+          expect(parser).toParse("a",   ["a"]);
+          expect(parser).toFailToParse("aa");
+          expect(parser).toFailToParse("aaa");
+        });
+
+        it("| ..2| matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|..2|', options);
+
+          expect(parser).toParse("",    []);
+          expect(parser).toParse("a",   ["a"]);
+          expect(parser).toParse("aa",  ["a", "a"]);
+          expect(parser).toFailToParse("aaa");
+        });
+
+        it("|2..3| matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|2..3|', options);
+
+          expect(parser).toFailToParse("");
+          expect(parser).toFailToParse("a");
+          expect(parser).toParse("aa",  ["a", "a"]);
+          expect(parser).toParse("aaa", ["a", "a", "a"]);
+          expect(parser).toFailToParse("aaaa");
+        });
+
+        it("|2..2| matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|2..2|', options);
+
+          expect(parser).toFailToParse("");
+          expect(parser).toFailToParse("a");
+          expect(parser).toParse("aa",  ["a", "a"]);
+          expect(parser).toFailToParse("aaa");
+        });
+
+        it("|2   | matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|2|', options);
+
+          expect(parser).toFailToParse("");
+          expect(parser).toFailToParse("a");
+          expect(parser).toParse("aa",  ["a", "a"]);
+          expect(parser).toFailToParse("aaa");
+        });
+
+        it("|3..2| matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|3..2|', options);
+
+          expect(parser).toFailToParse("");
+          expect(parser).toFailToParse("a");
+          expect(parser).toFailToParse("aa");
+          expect(parser).toFailToParse("aaa");
+        });
+      });
+
+      describe("with delimiter", function() {
+        it("| .. , delimiter| matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|.., "~"|', options);
+
+          expect(parser).toParse("",      []);
+          expect(parser).toParse("a",     ["a"]);
+          expect(parser).toParse("a~a",   ["a", "a"]);
+          expect(parser).toParse("a~a~a", ["a", "a", "a"]);
+        });
+
+        it("|0.. , delimiter| matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|0.., "~"|', options);
+
+          expect(parser).toParse("",      []);
+          expect(parser).toParse("a",     ["a"]);
+          expect(parser).toParse("a~a",   ["a", "a"]);
+          expect(parser).toParse("a~a~a", ["a", "a", "a"]);
+        });
+
+        it("|1.. , delimiter| matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|1.., "~"|', options);
+
+          expect(parser).toFailToParse("");
+          expect(parser).toParse("a",     ["a"]);
+          expect(parser).toParse("a~a",   ["a", "a"]);
+          expect(parser).toParse("a~a~a", ["a", "a", "a"]);
+        });
+
+        it("|2.. , delimiter| matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|2.., "~"|', options);
+
+          expect(parser).toFailToParse("");
+          expect(parser).toFailToParse("a");
+          expect(parser).toParse("a~a",   ["a", "a"]);
+          expect(parser).toParse("a~a~a", ["a", "a", "a"]);
+        });
+
+        it("| ..1, delimiter| matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|..1, "~"|', options);
+
+          expect(parser).toParse("",    []);
+          expect(parser).toParse("a",   ["a"]);
+          expect(parser).toFailToParse("a~a");
+          expect(parser).toFailToParse("a~a~a");
+        });
+
+        it("| ..2, delimiter| matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|..2, "~"|', options);
+
+          expect(parser).toParse("",     []);
+          expect(parser).toParse("a",    ["a"]);
+          expect(parser).toParse("a~a",  ["a", "a"]);
+          expect(parser).toFailToParse("a~a~a");
+        });
+
+        it("|2..3, delimiter| matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|2..3, "~"|', options);
+
+          expect(parser).toFailToParse("");
+          expect(parser).toFailToParse("a");
+          expect(parser).toParse("a~a",   ["a", "a"]);
+          expect(parser).toParse("a~a~a", ["a", "a", "a"]);
+          expect(parser).toFailToParse("a~a~a~a");
+        });
+
+        it("|2..2, delimiter| matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|2..2, "~"|', options);
+
+          expect(parser).toFailToParse("");
+          expect(parser).toFailToParse("a");
+          expect(parser).toParse("a~a",  ["a", "a"]);
+          expect(parser).toFailToParse("a~a~a");
+        });
+
+        it("|2   , delimiter| matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|2, "~"|', options);
+
+          expect(parser).toFailToParse("");
+          expect(parser).toFailToParse("a");
+          expect(parser).toParse("a~a",  ["a", "a"]);
+          expect(parser).toFailToParse("a~a~a");
+        });
+
+        it("|3..2, delimiter| matches correctly", function() {
+          var parser = PEG.buildParser('start = "a"|3..2, "~"|', options);
+
+          expect(parser).toFailToParse("");
+          expect(parser).toFailToParse("a");
+          expect(parser).toFailToParse("a~a");
+          expect(parser).toFailToParse("a~a~a");
+        });
+      });
+
+      it("handle delimiter correctly", function() {
+        var parser = PEG.buildParser('start = "a"|2..3, "~"|', options);
+
+        expect(parser).toFailToParse("");
+        expect(parser).toFailToParse("a");
+        expect(parser).toFailToParse("aa");
+        expect(parser).toFailToParse("a~");
+        expect(parser).toParse("a~a",   ["a", "a"]);
+        expect(parser).toFailToParse("a~a~");
+        expect(parser).toParse("a~a~a", ["a", "a", "a"]);
+        expect(parser).toFailToParse("a~a~a~");
+        expect(parser).toFailToParse("a~a~a~a");
+      });
+    });
+
     describe("rule reference matching", function() {
       it("follows rule references", function() {
         var parser = PEG.buildParser([
@@ -899,7 +1043,7 @@ describe("generated parser", function() {
            * duplicates. This is why the following test uses three choices
            * instead of seemingly sufficient two.
            *
-           * See https://github.com/dmajda/pegjs/pull/146.
+           * See https://github.com/pegjs/pegjs/pull/146.
            */
           var parser = PEG.buildParser('start = "a" / "a" / "a"', options);
 
@@ -995,7 +1139,7 @@ describe("generated parser", function() {
                 'start  = line (nl+ line)*',
                 'line   = digit (" "+ digit)*',
                 'digit  = [0-9]',
-                'nl     = ("\\r" / "\\n" / "\\u2028" / "\\u2029")'
+                'nl     = [\\r\\n\\u2028\\u2029]'
               ].join("\n"), options);
 
           expect(parser).toFailToParse("1\n2\n\n3\n\n\n4 5 x", {
@@ -1005,29 +1149,29 @@ describe("generated parser", function() {
           });
 
           /* Non-Unix newlines */
-          expect(parser).toFailToParse("1\rx", {   // Old Mac
+          expect(parser).toFailToParse("1\rx", {     // Old Mac
             offset: 2,
             line:   2,
             column: 1
           });
-          expect(parser).toFailToParse("1\r\nx", { // Windows
+          expect(parser).toFailToParse("1\r\nx", {   // Windows
             offset: 3,
             line:   2,
             column: 1
           });
-          expect(parser).toFailToParse("1\n\rx", { // mismatched
+          expect(parser).toFailToParse("1\n\rx", {   // mismatched
             offset: 3,
             line:   3,
             column: 1
           });
 
           /* Strange newlines */
-          expect(parser).toFailToParse("1\u2028x", { // line separator
+          expect(parser).toFailToParse("1\u2028x", {   // line separator
             offset: 2,
             line:   2,
             column: 1
           });
-          expect(parser).toFailToParse("1\u2029x", { // paragraph separator
+          expect(parser).toFailToParse("1\u2029x", {   // paragraph separator
             offset: 2,
             line:   2,
             column: 1
@@ -1097,6 +1241,38 @@ describe("generated parser", function() {
 
           expect(typeof source).toBe("string");
           expect(eval(source)).toParse("a", "a");
+        });
+      });
+    });
+
+    describe("exportVar", function() {
+      var grammar = 'start = "a"';
+
+      describe("without the |exportVar| option", function() {
+        it("get a parser object", function() {
+          var source = PEG.buildParser(grammar, { output: "source" });
+
+          var root = {};
+          (function() {
+            eval(source);
+          }).call(root);
+
+          expect(typeof root.PEG).toBe("object");
+          expect(root.PEG).toParse("a", "a");
+        });
+      });
+
+      describe("when the |exportVar| option is set to \"parser\"", function() {
+        it("returns a parser object", function() {
+          var source = PEG.buildParser(grammar, { output: "source", exportVar: "parser" });
+
+          var root = {};
+          (function() {
+            eval(source);
+          }).call(root);
+
+          expect(typeof root.parser).toBe("object");
+          expect(root.parser).toParse("a", "a");
         });
       });
     });
@@ -1209,6 +1385,78 @@ describe("generated parser", function() {
           "(*abc(*def*)ghi(*(*(*jkl*)*)*)mno*)",
           "(*abc(*def*)ghi(*(*(*jkl*)*)*)mno*)"
         );
+      });
+    });
+  });
+
+  var exports = false; // typeof exports !== "object" in eval context.
+  describe("publish module", function() {
+    var grammar = 'start = "a"';
+
+    describe("AMD style", function() {
+      it("get a parser object", function() {
+        var source = PEG.buildParser(grammar, { output: "source" });
+
+        var factory;
+        function define (func) {
+          factory = func;
+        }
+        define.amd = true;
+
+        var root = {
+          define: define
+        };
+        (function() {
+          eval(source);
+        }).call(root);
+
+        var parser = factory();
+        expect(typeof parser).toBe("object");
+        expect(parser).toParse("a", "a");
+      });
+    });
+
+    describe("CommonJS style", function() {
+      it("get a parser object", function() {
+        var source = PEG.buildParser(grammar, { output: "source" });
+
+        var module = { exports: {} };
+        var exports = {};
+        eval(source);
+
+        var parser = module.exports;
+        expect(typeof parser).toBe("object");
+        expect(parser).toParse("a", "a");
+      });
+    });
+
+    describe("PEG.js style", function() {
+      it("get a parser object", function() {
+        var source = PEG.buildParser(grammar, { output: "source" });
+
+        var modules = { define: function() {} };
+        var module = {};
+        eval(source);
+
+        var parser = module.exports;
+        expect(typeof parser).toBe("object");
+        expect(parser).toParse("a", "a");
+      });
+    });
+
+    describe("Web Browser style", function() {
+      it("get a parser object", function() {
+        var source = PEG.buildParser(grammar, { output: "source" });
+
+        var root = {
+        };
+        (function() {
+          eval(source);
+        }).call(root);
+
+        var parser = root.PEG;
+        expect(typeof parser).toBe("object");
+        expect(parser).toParse("a", "a");
       });
     });
   });

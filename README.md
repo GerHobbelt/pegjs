@@ -15,13 +15,20 @@ Features
   * Based on [parsing expression
     grammar](http://en.wikipedia.org/wiki/Parsing_expression_grammar) formalism
     — more powerful than traditional LL(*k*) and LR(*k*) parsers
-  * Usable [from your browser](http://pegjs.majda.cz/online), from the command
-    line, or via JavaScript API
+  * Usable [from your browser](http://pegjs.org/online), from the command line,
+    or via JavaScript API
+
+Clone Info
+----------
+
+This [clone](https://github.com/GerHobbelt/pegjs) contains the work done by
+[Mingun](https://github.com/Mingun/pegjs) and a patch by
+[Eric M. Cornelius](https://github.com/EricMCornelius/pegjs).
 
 Getting Started
 ---------------
 
-[Online version](http://pegjs.majda.cz/online) is the easiest way to generate a
+[Online version](http://pegjs.org/online) is the easiest way to generate a
 parser. Just enter your grammar, try parsing few inputs, and download generated
 parser code.
 
@@ -43,8 +50,10 @@ ways.
 
 ### Browser
 
-[Download](http://pegjs.majda.cz/#download) the PEG.js library (regular or
-minified version).
+[Download](http://pegjs.org/#download) the PEG.js library (regular or minified
+version) or install it using Bower:
+
+    $ bower install pegjs
 
 Generating a Parser
 -------------------
@@ -64,7 +73,7 @@ file but with “.js” extension. You can also specify the output file explicit
 
     $ pegjs arithmetics.pegjs arithmetics-parser.js
 
-If you omit both input and ouptut file, standard input and output are used.
+If you omit both input and output file, standard input and output are used.
 
 By default, the parser object is assigned to `module.exports`, which makes the
 output a Node.js module. You can assign it to another variable by passing a
@@ -76,13 +85,15 @@ You can tweak the generated parser with several options:
   * `--cache` — makes the parser cache results, avoiding exponential parsing
     time in pathological cases but making the parser slower
   * `--allowed-start-rules` — comma-separated list of rules the parser will be
-    allowed to start parsing from (default: the first rule in the grammar)
+    allowed to start parsing from, or * to allow all rules (default: the
+    first rule in the grammar)
   * `--plugin` — makes PEG.js use a specified plugin (can be specified multiple
     times)
   * `--extra-options` — additional options (in JSON format) to pass to
     `PEG.buildParser`
   * `--extra-options-file` — file with additional options (in JSON format) to
     pass to `PEG.buildParser`
+  * `--trace` — makes the parser trace its progress
 
 ### JavaScript API
 
@@ -110,7 +121,7 @@ object to `PEG.buildParser`. The following options are supported:
     parsing time in pathological cases but making the parser slower (default:
     `false`)
   * `allowedStartRules` — rules the parser will be allowed to start parsing from
-    (default: the first rule in the grammar)
+    or * to allow all (default: the first rule in the grammar)
   * `output` — if set to `"parser"`, the method will return generated parser
     object; if set to `"source"`, it will return parser source code as a string
     (default: `"parser"`)
@@ -124,17 +135,19 @@ Using the Parser
 Using the generated parser is simple — just call its `parse` method and pass an
 input string as a parameter. The method will return a parse result (the exact
 value depends on the grammar used to build the parser) or throw an exception if
-the input is invalid. The exception will contain `offset`, `line`, `column`,
-`expected`, `found` and `message` properties with more details about the error.
+the input is invalid. The exception will contain `location`, `expected`, `found`
+and `message` properties with more details about the error.
 
     parser.parse("abba"); // returns ["a", "b", "b", "a"]
 
     parser.parse("abcd"); // throws an exception
 
 You can tweak parser behavior by passing a second parameter with an options
-object to the `parse` method. Only one option is currently supported:
+object to the `parse` method. The following options are supported:
 
   * `startRule` — name of the rule to start parsing from
+  * `tracer` — tracer to use
+  * `startOffset` — start parsing the input at this position
 
 Parsers can also support their own custom options.
 
@@ -280,19 +293,40 @@ Match a subexpression and return its match result.
 #### *expression* \*
 
 Match zero or more repetitions of the expression and return their match results
-in an array. The matching is greedy, i.e. the parser tries to match the
-expression as many times as possible.
+in an array. The matching is greedy, matching the expression as many times as
+possible without backtracking.
 
 #### *expression* +
 
 Match one or more repetitions of the expression and return their match results
-in an array. The matching is greedy, i.e. the parser tries to match the
-expression as many times as possible.
+in an array. The matching is greedy, matching the expression as many times as
+possible without backtracking.
 
 #### *expression* ?
 
 Try to match the expression. If the match succeeds, return its match result,
-otherwise return `null`.
+otherwise return `null`. The matching is greedy, matching the expression as
+many times as possible without backtracking.
+
+#### *expression* |count|<br> *expression* |count,delimiter|<br> *expression* |min..max|<br> *expression* |min..max,delimiter|
+
+Match exact `count` repetitions of `expression`. If the match succeeds, return
+their match results in an array.
+
+-or-
+
+Match expression at least `min` but not more then `max` times. If the match
+succeeds, return their match results in an array. Both `min` and `max` may
+be omitted. If `min` is omitted, then it is assumed to be `0`. If `max` is
+omitted, then it is assumed to be infinity. Hence `expression |..|` is an
+equivalent of `expression |0..|` and `expression *`. `expression |1..|` is
+equivalent of `expression +`.
+
+Optionally, you can specify a delimiter by a rule reference or an arbitrary
+rule expression. The delimiter must appear between elements in the parsed
+input. The result of the delimiter expression itself will be dropped.
+
+`count`, `min` and `max` must be positive integers.
 
 #### & *expression*
 
@@ -317,10 +351,17 @@ otherwise consider the match failed.
 The code inside the predicate can access all variables and functions defined in
 the initializer at the beginning of the grammar.
 
-The code inside the predicate can also access the current parse position using
-the `offset` function. It returns a zero-based character index into the input
-string. The code can also access the current line and column using the `line`
-and `column` functions. Both return one-based indexes.
+The code inside the predicate can also access location information using the
+`location` function. It returns an object like this:
+
+    {
+      start: { offset: 23, line: 5, column: 6 },
+      end:   { offset: 23, line: 5, column: 6 }
+    }
+
+The `start` and `end` properties both refer to the current parse position. The
+`offset` property contains an offset as a zero-based index and `line` and
+`column` properties contain a line and a column as one-based indices.
 
 The code inside the predicate can also access the parser object using the
 `parser` variable and options passed to the parser using the `options` variable.
@@ -339,10 +380,17 @@ otherwise consider the match failed.
 The code inside the predicate can access all variables and functions defined in
 the initializer at the beginning of the grammar.
 
-The code inside the predicate can also access the current parse position using
-the `offset` function. It returns a zero-based character index into the input
-string. The code can also access the current line and column using the `line`
-and `column` functions. Both return one-based indexes.
+The code inside the predicate can also access location information using the
+`location` function. It returns an object like this:
+
+    {
+      start: { offset: 23, line: 5, column: 6 },
+      end:   { offset: 23, line: 5, column: 6 }
+    }
+
+The `start` and `end` properties both refer to the current parse position. The
+`offset` property contains an offset as a zero-based index and `line` and
+`column` properties contain a line and a column as one-based indices.
 
 The code inside the predicate can also access the parser object using the
 `parser` variable and options passed to the parser using the `options` variable.
@@ -393,11 +441,19 @@ must be balanced.
 The code inside the action can also access the string matched by the expression
 using the `text` function.
 
-The code inside the action can also access the parse position at the beginning
-of the action's expression using the `offset` function. It returns a zero-based
-character index into the input string. The code can also access the line and
-column at the beginning of the action's expression using the `line` and `column`
-functions. Both return one-based indexes.
+
+The code inside the action can also access location information using the
+`location` function. It returns an object like this:
+
+    {
+      start: { offset: 23, line: 5, column: 6 },
+      end:   { offset: 25, line: 5, column: 8 }
+    }
+
+The `start` property refers to the position at the beginning of the expression,
+the `end` property refers to position after the end of the expression. The
+`offset` property contains an offset as a zero-based index and `line` and
+`column` properties contain a line and a column as one-based indices.
 
 The code inside the action can also access the parser object using the `parser`
 variable and options passed to the parser using the `options` variable.
@@ -416,7 +472,7 @@ Compatibility
 Both the parser generator and generated parsers should run well in the following
 environments:
 
-  * Node.js 0.8.0+
+  * Node.js 0.10.0+
   * IE 8+
   * Firefox
   * Chrome
@@ -426,19 +482,23 @@ environments:
 Development
 -----------
 
-  * [Project website](http://pegjs.majda.cz/)
-  * [Wiki](https://github.com/dmajda/pegjs/wiki)
-  * [Source code](https://github.com/dmajda/pegjs)
+  * [Project website](http://pegjs.org/)
+  * [Wiki](https://github.com/pegjs/pegjs/wiki)
+  * [Source code](https://github.com/pegjs/pegjs)
   * [Trello board](https://trello.com/board/peg-js/50a8eba48cf95d4957006b01)
-  * [Issue tracker](https://github.com/dmajda/pegjs/issues)
+  * [Issue tracker](https://github.com/pegjs/pegjs/issues)
   * [Google Group](http://groups.google.com/group/pegjs)
   * [Twitter](http://twitter.com/peg_js)
 
 PEG.js is developed by [David Majda](http://majda.cz/)
-([@dmajda](http://twitter.com/dmajda)). You are welcome to contribute code.
-Unless your contribution is really trivial you should get in touch with me first
-— this can prevent wasted effort on both sides. You can send code both as a
-patch or a GitHub pull request.
+([@dmajda](http://twitter.com/dmajda)). The [Bower
+package](https://github.com/pegjs/bower) is maintained by [Michel
+Krämer](http://www.michel-kraemer.com/)
+([@michelkraemer](https://twitter.com/michelkraemer)).
+
+You are welcome to contribute code.  Unless your contribution is really trivial
+you should get in touch with me first — this can prevent wasted effort on both
+sides. You can send code both as a patch or a GitHub pull request.
 
 Note that PEG.js is still very much work in progress. There are no compatibility
 guarantees until version 1.0.
