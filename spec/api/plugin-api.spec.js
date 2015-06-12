@@ -1,3 +1,6 @@
+/* global describe, expect, jasmine, it, PEG, beforeEach */
+"use strict";
+
 describe("plugin API", function() {
   describe("use", function() {
     var grammar = 'start = "a"';

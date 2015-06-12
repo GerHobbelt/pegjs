@@ -1,3 +1,6 @@
+/* global Runner, benchmarks */
+"use strict";
+
 $("#run").click(function() {
 
   /* Results Table Manipulation */

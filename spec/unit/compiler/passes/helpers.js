@@ -1,3 +1,6 @@
+/* global jasmine, PEG, beforeEach */
+"use strict";
+
 jasmine.Expectation.addMatchers({
   toChangeAST: function() {
     return {

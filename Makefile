@@ -47,8 +47,8 @@ NODE_MODULES_BIN_DIR = $(NODE_MODULES_DIR)/.bin
 PARSER_SRC_FILE = $(SRC_DIR)/parser.pegjs
 PARSER_OUT_FILE = $(LIB_DIR)/parser.js
 
-BROWSER_FILE_DEV = $(BROWSER_DIR)/peg-$(PEGJS_VERSION).js
-BROWSER_FILE_MIN = $(BROWSER_DIR)/peg-$(PEGJS_VERSION).min.js
+BROWSER_FILE_DEV = $(BROWSER_DIR)/peg.js
+BROWSER_FILE_MIN = $(BROWSER_DIR)/peg.min.js
 
 VERSION_FILE = VERSION
 
@@ -87,6 +87,7 @@ browser: parser
 	echo ' * Licensed under the MIT license.'                                          >> $(BROWSER_FILE_DEV)
 	echo ' */'                                                                         >> $(BROWSER_FILE_DEV)
 	echo 'var PEG = (function(undefined) {'                                            >> $(BROWSER_FILE_DEV)
+	echo '  "use strict";'                                                             >> $(BROWSER_FILE_DEV)
 	echo '  var modules = {'                                                           >> $(BROWSER_FILE_DEV)
 	echo '    define: function(name, factory) {'                                       >> $(BROWSER_FILE_DEV)
 	echo '      var dir    = name.replace(/(^|\/)[^\/]+$$/, "$$1"),'                   >> $(BROWSER_FILE_DEV)

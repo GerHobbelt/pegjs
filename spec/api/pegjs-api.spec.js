@@ -1,3 +1,6 @@
+/* global expect, it, PEG, describe, spyOn */
+"use strict";
+
 describe("PEG.js API", function() {
   beforeEach(function() {
     this.addMatchers({
