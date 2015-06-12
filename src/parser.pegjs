@@ -285,17 +285,13 @@ LabeledExpression
           location: location()
         };
       } else {
-        expression.annotations = mergeArrays(expression.annotations, annotations);
-        expression.region = (options.includeRegionInfo ? region() : false);
-        return expression;
+        return {
+          type: "unlabeled",
+          annotations: annotations,
+          expression: expression,
+          location: location()
+        };
       }
-    }
-  / expression:PrefixedExpression {
-      return {
-        type:       "unlabeled",
-        expression: expression,
-        location:   location()
-      };
     }
 
 PrefixedExpression
