@@ -1,4 +1,4 @@
-/* global expect, it, PEG, describe */
+/* global expect, it, PEG, describe, jasmine, beforeEach */
 "use strict";
 
 // WARNING: this is the OLD, OBSOLETED spec file; the new copy exists in ../../spec/behavior/generated-parser-behavior.spec.js
@@ -1132,13 +1132,23 @@ describe("generated parser behavior", function() {
         it("reports position correctly with invalid input", function() {
           var parser = PEG.buildParser('start = "a"', options);
 
-          expect(parser).toFailToParse("b", { offset: 0, line: 1, column: 1 });
+          expect(parser).toFailToParse("b", {
+            location: {
+              start: { offset: 0, line: 1, column: 1 },
+              end:   { offset: 1, line: 1, column: 2 }
+            }
+          });
         });
 
         it("reports position correctly with trailing input", function() {
           var parser = PEG.buildParser('start = "a"', options);
 
-          expect(parser).toFailToParse("aa", { offset: 1, line: 1, column: 2});
+          expect(parser).toFailToParse("aa", {
+            location: {
+              start: { offset: 1, line: 1, column: 2 },
+              end:   { offset: 2, line: 1, column: 3 }
+            }
+          });
         });
 
         it("reports position correctly in complex cases", function() {
@@ -1150,38 +1160,44 @@ describe("generated parser behavior", function() {
               ].join("\n"), options);
 
           expect(parser).toFailToParse("1\n2\n\n3\n\n\n4 5 x", {
-            offset: 13,
-            line:   7,
-            column: 5
+            location: {
+              start: { offset: 13, line: 7, column: 5 },
+              end:   { offset: 14, line: 7, column: 6 }
+            }
           });
 
           /* Non-Unix newlines */
           expect(parser).toFailToParse("1\rx", {     // Old Mac
-            offset: 2,
-            line:   2,
-            column: 1
+            location: {
+              start: { offset: 2, line: 2, column: 1 },
+              end:   { offset: 3, line: 2, column: 2 }
+            }
           });
           expect(parser).toFailToParse("1\r\nx", {   // Windows
-            offset: 3,
-            line:   2,
-            column: 1
+            location: {
+              start: { offset: 3, line: 2, column: 1 },
+              end:   { offset: 4, line: 2, column: 2 }
+            }
           });
           expect(parser).toFailToParse("1\n\rx", {   // mismatched
-            offset: 3,
-            line:   3,
-            column: 1
+            location: {
+              start: { offset: 3, line: 3, column: 1 },
+              end:   { offset: 4, line: 3, column: 2 }
+            }
           });
 
           /* Strange newlines */
           expect(parser).toFailToParse("1\u2028x", {   // line separator
-            offset: 2,
-            line:   2,
-            column: 1
+            location: {
+              start: { offset: 2, line: 2, column: 1 },
+              end:   { offset: 3, line: 2, column: 2 }
+            }
           });
           expect(parser).toFailToParse("1\u2029x", {   // paragraph separator
-            offset: 2,
-            line:   2,
-            column: 1
+            location: {
+              start: { offset: 2, line: 2, column: 1 },
+              end:   { offset: 3, line: 2, column: 2 }
+            }
           });
         });
       });

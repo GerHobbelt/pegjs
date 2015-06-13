@@ -53,7 +53,7 @@ describe("compiler pass |reportUnusedRules|", function() {
             };
           }
 
-          return e.message === 'Line '+line+', column '+column+': Rule "start" is not used.';
+          return e.message === 'line ' + line + ', column ' + column + ': Rule "start" is not used.';
         }
       }
     });
