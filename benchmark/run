@@ -169,8 +169,22 @@ var options = {
   cache:    0,
   collectRunTimeStatistics: 0,
   verboseOutput: false,
+  //output:   "source",
   optimize: "speed",
+  trace:    false,
+  printRuleSet: false,
+  reportDuplicateRules: true,
+  reportDuplicateLabels: true,
+  includeUnlabeledReferences: false,
+  includeRuleNames: false,
+  startRule: null,
+  allowedStartRules: [],
+  startOffset: 0,
   plugins:  []
+  //collector
+  //includeRegionInfo
+  //reportElapsedTime
+  //tracer
 };
 
 while (args.length > 0 && isOption(args[0])) {

@@ -119,7 +119,19 @@ options = {
   output:   "source",
   optimize: "speed",
   trace:    false,
+  printRuleSet: false,
+  reportDuplicateRules: true,
+  reportDuplicateLabels: true,
+  includeUnlabeledReferences: false,
+  includeRuleNames: false,
+  startRule: null,
+  allowedStartRules: [],
+  startOffset: 0,
   plugins:  []
+  //collector
+  //includeRegionInfo
+  //reportElapsedTime
+  //tracer
 };
 
 while (args.length > 0 && isOption(args[0])) {
@@ -298,7 +310,7 @@ function stream(inputStream, outputStream) {
     try {
       source = PEG.buildParser(input, options);
     } catch (e) {
-      if (e.location !== undefined) {
+      if (e.location) {
         abort(e.location.start.line + ":" + e.location.start.column + ": " + e.message, e);
       } else {
         abort(e.message, e);
