@@ -50,10 +50,10 @@ describe("PEG.js grammar parser", function() {
         alternatives: [actionAbcd, actionEfgh, actionIjkl, actionMnop]
       },
       named             = { type: "named",       name: "start rule", expression: literalAbcd },
-      ruleA             = { type: "rule",        name: "a",          annotations: [], expression: literalAbcd },
-      ruleB             = { type: "rule",        name: "b",          annotations: [], expression: literalEfgh },
-      ruleC             = { type: "rule",        name: "c",          annotations: [], expression: literalIjkl },
-      ruleStart         = { type: "rule",        name: "start",      annotations: [], expression: literalAbcd },
+      ruleA             = { type: "rule",        name: "a",          expression: literalAbcd },
+      ruleB             = { type: "rule",        name: "b",          expression: literalEfgh },
+      ruleC             = { type: "rule",        name: "c",          expression: literalIjkl },
+      ruleStart         = { type: "rule",        name: "start",      expression: literalAbcd },
       initializer       = { type: "initializer", code: " code " },
       options           = {
         nil: null,
@@ -74,7 +74,6 @@ describe("PEG.js grammar parser", function() {
         {
           type: "rule",
           name: "start",
-          annotations: [],
           expression: expression
         }
       ]
@@ -150,6 +149,14 @@ describe("PEG.js grammar parser", function() {
   var stripLocation = (function() {
     function buildVisitor(functions) {
       return function(node) {
+        if (!node || typeof functions[node.type] !== "function") {
+          console.error("B0RK B0RK B0RK: no visitor function for node/type: ", {
+            node: node,
+            type: node && node.type,
+            functions: functions 
+          });
+          throw new Error("B0RK B0RK B0RK: no visitor function: node = " + (node) + ", type = " + (node.type));
+        }
         return functions[node.type].apply(null, arguments);
       };
     }
@@ -206,12 +213,17 @@ describe("PEG.js grammar parser", function() {
       optional:     stripExpression,
       zero_or_more: stripExpression,
       one_or_more:  stripExpression,
+      range:        stripLeaf,
       semantic_and: stripLeaf,
       semantic_not: stripLeaf,
       rule_ref:     stripLeaf,
       literal:      stripLeaf,
       "class":      stripLeaf,
-      any:          stripLeaf
+      any:          stripLeaf,
+      regex:        stripLeaf,
+      code:         stripLeaf,
+      epsilon:      stripLeaf,
+      annotation:   stripLeaf
     });
 
     return strip;
@@ -229,6 +241,9 @@ describe("PEG.js grammar parser", function() {
         }
         function rm(node) {
           delete node.location;
+          if (node.annotations === false) {
+            delete node.annotations;
+          }
         }
         function doInExpression(node) {
           rm(node);
@@ -301,10 +316,12 @@ describe("PEG.js grammar parser", function() {
           return this.env.equals_(result, expected);
         } catch (e) {
           this.message = function() {
+            var stackdump = e.stack || [];
             return "Expected " + jasmine.pp(this.actual) + " "
                  + "to parse as " + jasmine.pp(expected) + ", "
                  + "but it failed to parse with message "
-                 + jasmine.pp(e.message) + ".";
+                 + jasmine.pp(e.message) + "."
+                 + " (Stack trace:\n" + stackdump.join("\n") + ")";
           };
 
           return false;
@@ -912,7 +929,7 @@ describe("PEG.js grammar parser", function() {
   /* Annotations */
   it("parses Annotations", function() {
     var grammar = oneRuleGrammar(literalAbcd);
-    grammar.rules[0].annotations.push({ type: 'annotation', name: 'Annotation', params: [] });
+    grammar.rules[0].annotations = [{ type: 'annotation', name: 'Annotation', params: [] }];
     expect('@Annotation start = "abcd"').toParseAs(grammar);
     expect('@Annotation\nstart = "abcd"').toParseAs(grammar);
     expect('@Annotation()start = "abcd"').toParseAs(grammar);
@@ -965,7 +982,7 @@ describe("PEG.js grammar parser", function() {
   /* Annotations */
   it("parses annotations", function() {
     var grammar = oneRuleGrammar(literalAbcd);
-    grammar.rules[0].annotations.push({ type: 'annotation', name: 'Annotation', params: [] });
+    grammar.rules[0].annotations = [{ type: 'annotation', name: 'Annotation', params: [] }];
     expect('@Annotation start = "abcd"').toParseAs(grammar);
     expect('@Annotation\nstart = "abcd"').toParseAs(grammar);
     expect('@Annotation()start = "abcd"').toParseAs(grammar);

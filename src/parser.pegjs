@@ -73,20 +73,22 @@
     return [first].concat(extractList(rest, index));
   }
 
-  // Merge N arrays into one, where all elements are concatenated in order.
+  // Merge N annotation arrays into one, where all elements are concatenated in order.
   //
-  // Return the resulting array.
+  // Return the resulting array; return boolean FALSE when the result would be an empty array.
   //
   // Notes: 
   // - falsey arguments are ignored (contrasting with standard Array.concat() which inserts a null entry in the resultant array)
   // - the returned array is a *shallow* clone.
-  function mergeArrays(array1 /* , ... */ ) {
+  function mergeAnnotations(array1 /* , ... */ ) {
     var arr = Array.prototype.slice.call(arguments, 0);
+    var not_empty = false;
 
     for (var i = 0, len = arr.length; i < len; i++) {
       arr[i] = arr[i] || [];
+      not_empty |= arr[i].length > 0; 
     }
-    return Array.prototype.concat.apply([], arr);
+    return !not_empty ? false : Array.prototype.concat.apply([], arr);
   }
 }
 
@@ -123,7 +125,7 @@ Rule
         type:        "rule",
         name:        name,
         rawText:     text(),
-        annotations: mergeArrays(a1, a2, extractOptional(displayName, 2)),
+        annotations: mergeAnnotations(a1, a2, /* a3 */ extractOptional(displayName, 2)),
         expression:  displayName !== null
           ? {
               type:       "named",
@@ -140,7 +142,13 @@ Expression
   = ChoiceExpression
 
 Annotations
-  = ( Annotation )*
+  = annotations:( Annotation )* {
+      if (annotations.length === 0) {
+        return false;
+      } else {
+        return annotations;
+      }
+    };
 
 Annotation
   = "@" __ name:AnnotationKeyword __ params:Params? {
@@ -256,7 +264,7 @@ ActionExpression
           location: location()
         };
       } else {
-        expression.annotations = mergeArrays(expression.annotations, annotations);
+        expression.annotations = mergeAnnotations(expression.annotations, annotations);
         return expression;
       }
     };
@@ -283,12 +291,18 @@ LabeledExpression
           location: location()
         };
       } else {
-        return {
-          type: "unlabeled",
-          annotations: annotations,
-          expression: expression,
-          location: location()
-        };
+        if (options.includeUnlabeledReferences) {
+          return {
+            type: "unlabeled",
+            annotations: annotations,
+            expression: expression,
+            location: location()
+          };
+        } else {
+          expression.annotations = mergeAnnotations(expression.annotations, annotations);
+          expression.location = location();
+          return expression;
+        }
       }
     }
 
@@ -380,7 +394,7 @@ Range
   = "|" __ r:Range2 __ delimiter:("," __ annotations:Annotations PrimaryExpression __)? "|" {
       r.delimiter = extractOptional(delimiter, 3);
       if (r.delimiter) {
-        r.delimiter.annotations = mergeArrays(r.delimiter.annotations, annotations);
+        r.delimiter.annotations = mergeAnnotations(r.delimiter.annotations, /* annotations */ extractOptional(delimiter, 2));
       }
       return r;
     };
