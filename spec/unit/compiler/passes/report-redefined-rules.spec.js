@@ -1,3 +1,8 @@
+/* global describe, PEG, it, expect */
+"use strict";
+
+var GrammarError = require("../../../../lib/grammar-error");
+
 describe("compiler pass |reportRedefinedRules|", function() {
   var pass = PEG.compiler.passes.check.reportRedefinedRules;
   var collector = {

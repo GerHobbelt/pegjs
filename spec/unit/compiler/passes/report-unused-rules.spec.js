@@ -1,3 +1,8 @@
+/* global describe, PEG, it, expect */
+"use strict";
+
+var GrammarError = require("../../../../lib/grammar-error");
+
 // TODO: write a proper spec for this one!
 
 describe("compiler pass |reportUnusedRules|", function() {
