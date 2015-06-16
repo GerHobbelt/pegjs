@@ -17,12 +17,8 @@
   "nonew":     true,
   "strict":    true,
   "trailing":  true,
-  "validthis": true,
   "undef":     true,
+  "validthis": true,
   "-W082":     false,
-  "strict":    true,
-  "-W097":     false,
-  "node":      true,
-  "jquery":    true,
-  "browser":   true,
+  "-W097":     false
 }
