@@ -1,4 +1,5 @@
-/* global expect, it, PEG, describe, jasmine, beforeEach */
+/* global beforeEach, describe, expect, it, jasmine, PEG */
+
 "use strict";
 
 describe("generated parser behavior", function() {

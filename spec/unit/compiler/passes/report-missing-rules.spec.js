@@ -1,4 +1,5 @@
-/* global describe, PEG, it, expect */
+/* global describe, expect, it, PEG */
+
 "use strict";
 
 describe("compiler pass |reportMissingRules|", function() {

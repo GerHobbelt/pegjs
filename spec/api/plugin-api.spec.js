@@ -1,4 +1,5 @@
-/* global describe, expect, jasmine, it, PEG, beforeEach */
+/* global beforeEach, describe, expect, it, jasmine, PEG */
+
 "use strict";
 
 describe("plugin API", function() {

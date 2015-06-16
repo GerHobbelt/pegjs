@@ -1,4 +1,5 @@
-/* global expect, it, PEG, describe */
+/* global describe, expect, it, PEG */
+
 "use strict";
 
 describe("compiler pass |reportLeftRecursion|", function() {

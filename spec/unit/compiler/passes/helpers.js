@@ -1,4 +1,5 @@
-/* global jasmine, PEG, beforeEach */
+/* global beforeEach, jasmine, PEG */
+
 "use strict";
 
 // Usage:

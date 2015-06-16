@@ -1,12 +1,12 @@
 "use strict";
 
-;(function(root, factory) {
+(function(root, factory) {
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = factory();
   } else {
     root.benchmarks = factory();
   }
-}(this, function() {  // jshint ignore:line
+}(this, function() {
 
   return [
     {

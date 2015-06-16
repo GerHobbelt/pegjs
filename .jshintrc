@@ -15,6 +15,7 @@
   "node":      true,
   "noempty":   true,
   "nonew":     true,
+  "strict":    true,
   "trailing":  true,
   "validthis": true,
   "undef":     true,

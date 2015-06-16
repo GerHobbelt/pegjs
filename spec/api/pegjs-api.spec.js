@@ -1,4 +1,5 @@
-/* global expect, it, PEG, describe, spyOn */
+/* global describe, expect, it, PEG, spyOn */
+
 "use strict";
 
 describe("PEG.js API", function() {

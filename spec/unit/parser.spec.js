@@ -1,4 +1,5 @@
-/* global describe, expect, it, jasmine, PEG, beforeEach */
+/* global beforeEach, describe, expect, it, jasmine, PEG */
+
 "use strict";
 
 describe("PEG.js grammar parser", function() {

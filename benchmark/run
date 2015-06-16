@@ -1,10 +1,11 @@
 #!/usr/bin/env node
+
 "use strict";
 
+var util = require("util");
 var fs   = require("fs");
 var PEG  = require("../lib/peg");
 var statistics = require("../lib/statistics");
-
 var benchmarks = require("./benchmarks.js");
 var Runner = require("./runner.js")(PEG);
 

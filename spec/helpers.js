@@ -1,6 +1,6 @@
 "use strict";
 
-;(function(root) {
+(function(root) {
   if (typeof module !== 'undefined') {
     root.PEG = require("../lib/peg.js");
   }
