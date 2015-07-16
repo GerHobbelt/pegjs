@@ -1,6 +1,8 @@
-/* global beforeEach, describe, expect, it, jasmine, PEG */
+/* global beforeEach, describe, expect, it, jasmine */
 
 "use strict";
+
+var PEG = require("../../lib/peg.js");
 
 describe("PEG.js grammar parser", function() {
   var literalAbcd       = { type: "literal",      value: "abcd", ignoreCase: false },

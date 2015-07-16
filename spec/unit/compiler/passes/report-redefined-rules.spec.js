@@ -1,6 +1,7 @@
-/* global describe, PEG, it, expect */
+/* global describe, it, expect, beforeEach, jasmine */
 "use strict";
 
+var PEG = require("../../../../lib/peg.js");
 var GrammarError = require("../../../../lib/grammar-error");
 
 describe("compiler pass |reportRedefinedRules|", function() {
@@ -51,7 +52,7 @@ describe("compiler pass |reportRedefinedRules|", function() {
             };
           }
 
-          return e.message === 'Line '+line+', column '+column+': Rule "redefined" redefined; previously defined in line '+line2+', column '+column2+'.';
+          return e.message === 'line '+line+', column '+column+': Rule "redefined" redefined; previously defined in line '+line2+', column '+column2+'.';
         }
       }
     });

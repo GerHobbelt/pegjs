@@ -1,6 +1,7 @@
-/* global describe, PEG, it, expect */
+/* global describe, it, expect */
 "use strict";
 
+var PEG = require("../../../../lib/peg.js");
 var GrammarError = require("../../../../lib/grammar-error");
 
 // TODO: write a proper spec for this one!
@@ -53,7 +54,7 @@ describe("compiler pass |reportUnusedRules|", function() {
             };
           }
 
-          return e.message === 'line ' + line + ', column ' + column + ': Rule "start" is not used.';
+          return e.message === 'line ' + line + ', column ' + column + ': Rule "start" is not used. (It will be discarded.)';
         }
       }
     });

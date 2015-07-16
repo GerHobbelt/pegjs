@@ -1,5 +1,7 @@
-/* global expect, it, PEG, describe */
+/* global expect, it, describe, beforeEach */
 "use strict";
+
+var PEG = require("../../../../lib/peg.js");
 
 describe("compiler pass |reportDuplicateRules|", function() {
   var pass = function ( ast ) {

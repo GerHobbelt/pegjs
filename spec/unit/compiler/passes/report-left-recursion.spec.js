@@ -1,6 +1,8 @@
-/* global describe, expect, it, PEG */
+/* global describe, expect, it, beforeEach */
 
 "use strict";
+
+var PEG = require("../../../../lib/peg.js");
 
 describe("compiler pass |reportLeftRecursion|", function() {
   var pass = PEG.compiler.passes.check.reportLeftRecursion;

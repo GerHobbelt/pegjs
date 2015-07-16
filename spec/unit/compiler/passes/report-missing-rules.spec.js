@@ -1,6 +1,8 @@
-/* global describe, expect, it, PEG */
+/* global describe, expect, it, beforeEach */
 
 "use strict";
+
+var PEG = require("../../../../lib/peg.js");
 
 describe("compiler pass |reportMissingRules|", function() {
   var pass = PEG.compiler.passes.check.reportMissingRules;

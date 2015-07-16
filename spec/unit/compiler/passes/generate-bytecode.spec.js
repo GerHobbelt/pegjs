@@ -1,6 +1,8 @@
-/* global describe, expect, it, PEG */
+/* global describe, expect, it, beforeEach */
 
 "use strict";
+
+var PEG = require("../../../../lib/peg.js");
 
 describe("compiler pass |generateBytecode|", function() {
   var pass = PEG.compiler.passes.generate.generateBytecode;
@@ -195,7 +197,12 @@ describe("compiler pass |generateBytecode|", function() {
 
       it("does fail the parse with an error", function() {
         expect(function () {
+          try {
           var parser = PEG.buildParser(grammar);
+        } catch (e) {
+          console.log("201: ", e, e.stack);
+          throw e;
+        }
         }).toThrow('Expected "!", "$", "&", "(", ".", character class, comment, end of line, identifier, literal or whitespace but end of input found.');
       });
 
