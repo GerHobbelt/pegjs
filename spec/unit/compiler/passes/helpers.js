@@ -1,6 +1,8 @@
-/* global beforeEach, jasmine, PEG */
+/* global beforeEach, jasmine */
 
 "use strict";
+
+var PEG = require("../../../../lib/peg.js");
 
 // Usage:
 // 
@@ -11,9 +13,7 @@
 //       ...
 //     });
 module.exports = {
-  toChangeAST: function() {
-    return {
-      compare: function(grammar) {
+  toChangeAST: function(grammar) {
         function matchDetails(value, details) {
           function isArray(value) {
             return Object.prototype.toString.apply(value) === "[object Array]";
@@ -67,7 +67,7 @@ module.exports = {
             details = arguments[arguments.length - 1],
             ast     = PEG.parser.parse(grammar);
 
-        //this.actual(ast, options);
+        this.actual(ast, options);
 
         var pass = matchDetails(ast, details);
         return {
@@ -79,24 +79,20 @@ module.exports = {
                  + "to match " + jasmine.pp(details) + ", "
                  + "but it " + (this.isNot ? "did" : "didn't") + "."
         };
-      }
-    };
   },
 
-  toReportError: function() {
-    return {
-      compare: function(grammar, details) {
-        var ast = PEG.parser.parse(grammar);
-
+  toReportError: function(grammar, details) {
         try {
+          var ast = PEG.parser.parse(grammar);
+
           this.actual(ast);
 
           return {
             pass: false,
-            message: "Expected the pass to report an error"
+            message: "Expected the pass " + (this.isNot ? "not " : "") + "to report an error"
                    + (details ? " with details " + jasmine.pp(details) : "") + ", "
                    + "for grammar " + jasmine.pp(grammar) + ", "
-                   + "but it didn't."
+                   + "but it " + (this.isNot ? "did" : "didn't") + "."
           };
         } catch (e) {
           /*
@@ -104,12 +100,13 @@ module.exports = {
            * in variable.
            */
           var key, message;
+          console.error('exception: ', e, e.stack);
 
           if (details) {
             for (key in details) {
               if (details.hasOwnProperty(key)) {
                 if (!this.env.equals_(e[key], details[key])) {
-                  message = "Expected the pass to report an error "
+                  message = "Expected the pass " + (this.isNot ? "not " : "") + "to report an error "
                          + (details ? "with details " + jasmine.pp(details) + " " : "")
                          + "for grammar " + jasmine.pp(grammar) + ", "
                          + "but " + jasmine.pp(key) + " "
@@ -126,18 +123,15 @@ module.exports = {
 
           return {
             pass: true,
-            message: "Expected the pass not to report an error"
+            message: "Expected the pass " + (this.isNot ? "not " : "") + "to report an error"
                    + "for grammar " + jasmine.pp(grammar) + ", "
-                   + "but it did."
+                   + "but it " + (this.isNot ? "did" : "didn't") + ", with message "
+                   + jasmine.pp(e.message) + "."
           };
         }
-      }
-    };
   },
 
-  toParse: function() {
-    return {
-      compare: function(input) {
+  toParse: function(input) {
         var options  = arguments.length > 2 ? arguments[1] : {},
             expected = arguments[arguments.length - 1],
             result;
@@ -165,13 +159,9 @@ module.exports = {
 
           return false;
         }
-      }
-    };
   },
 
-  toFailToParse: function() {
-    return {
-      compare: function(input) {
+  toFailToParse: function(input) {
         var options = arguments.length > 2 ? arguments[1] : {},
             details = arguments.length > 1
                         ? arguments[arguments.length - 1]
@@ -214,8 +204,7 @@ module.exports = {
                       return "Expected " + jasmine.pp(input) + " "
                            + "with options " + jasmine.pp(options) + " "
                            + "to report an error"
-                           + (details ? " with details " + jasmine.pp(details) + " " : "")
-                           + "for grammar " + jasmine.pp(grammar) + ", "
+                           + (details ? " with details " + jasmine.pp(details) + " " : "") + ", "
                            + "but " + jasmine.pp(key) + " "
                            + "is " + jasmine.pp(e[key]) + ".";
                     };
@@ -229,13 +218,9 @@ module.exports = {
 
           return true;
         }
-      }
-    };
   },
 
   toBeObject: function() {
-    return {
-      compare: function() {
         this.message = function() {
           return "Expected " + jasmine.pp(this.actual) + " "
                + (this.isNot ? "not " : "")
@@ -243,13 +228,9 @@ module.exports = {
         };
 
         return this.actual !== null && typeof this.actual === "object";
-      }
-    };
   },
 
   toBeArray: function() {
-    return {
-      compare: function() {
         this.message = function() {
           return "Expected " + jasmine.pp(this.actual) + " "
                + (this.isNot ? "not " : "")
@@ -257,13 +238,9 @@ module.exports = {
         };
 
         return Object.prototype.toString.apply(this.actual) === "[object Array]";
-      }
-    };
   },
 
   toBeFunction: function() {
-    return {
-      compare: function() {
         this.message = function() {
           return "Expected " + jasmine.pp(this.actual) + " "
                + (this.isNot ? "not " : "")
@@ -271,8 +248,6 @@ module.exports = {
         };
 
         return typeof this.actual === "function";
-      }
-    };
   }
 };
 
