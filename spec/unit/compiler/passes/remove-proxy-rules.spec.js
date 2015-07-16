@@ -4,6 +4,21 @@
 
 var PEG = require("../../../../lib/peg.js");
 
+var specTestCollector = {
+  emitFatalError: function(message, extra_info) {
+    throw new GrammarError("fatal:" + message, extra_info);
+  },
+  emitError: function(message, extra_info) {
+    throw new GrammarError("error:" + message, extra_info);
+  },
+  emitWarning: function(message, extra_info) {
+    console.log("warning: " + message, extra_info);
+  },
+  emitInfo: function(message, extra_info) {
+    console.log("info: " + message, extra_info);
+  }
+};
+
 describe("compiler pass |removeProxyRules|", function() {
   var pass = PEG.compiler.passes.transform.removeProxyRules;
 
@@ -19,7 +34,10 @@ describe("compiler pass |removeProxyRules|", function() {
           'proxy = proxied',
           'proxied = "a"'
         ].join("\n"),
-        { allowedStartRules: ["start"] },
+        { 
+          allowedStartRules: ["start"],
+          collector: specTestCollector 
+        },
         {
           rules: [
             {
@@ -41,7 +59,10 @@ describe("compiler pass |removeProxyRules|", function() {
           'proxy = proxied',
           'proxied = "a"'
         ].join("\n"),
-        { allowedStartRules: ["start", "proxy"] },
+        { 
+          allowedStartRules: ["start", "proxy"],
+          collector: specTestCollector 
+        },
         {
           rules: [
             {

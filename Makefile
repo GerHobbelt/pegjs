@@ -5,30 +5,34 @@ PEGJS_VERSION = `cat $(VERSION_FILE)`
 # ===== Modules =====
 
 # Order matters -- dependencies must be listed before modules dependent on them.
-MODULES =                                           \
-		  utils/arrays                              \
-		  utils/objects                             \
-		  utils/classes                             \
-		  grammar-error                             \
-		  parser                                    \
-		  compiler/visitor                          \
-          compiler/asts                             \
-		  compiler/opcodes                          \
-		  compiler/javascript                       \
-		  compiler/passes/generate-bytecode         \
-		  compiler/passes/generate-javascript       \
-		  compiler/passes/remove-proxy-rules        \
-		  compiler/passes/report-left-recursion     \
-          compiler/passes/report-infinite-loops     \
-		  compiler/passes/report-missing-rules      \
-		  compiler/passes/report-unused-rules       \
-          compiler/passes/report-duplicate-labels   \
-          compiler/passes/report-duplicate-rules    \
-		  compiler/passes/report-redefined-rules    \
-		  compiler/passes/propagate-descriptions    \
-		  compiler/passes/patch-ast-graph           \
-		  compiler/passes/print-ruleset             \
-		  compiler                                  \
+MODULES =                                            \
+		  utils/arrays                               \
+		  utils/objects                              \
+		  utils/classes                              \
+		  grammar-error                              \
+		  parser                                     \
+		  compiler/visitor                           \
+          compiler/asts                              \
+		  compiler/opcodes                           \
+		  compiler/javascript                        \
+		  statistics                                 \
+		  compiler/passes/generate-bytecode          \
+		  compiler/passes/generate-javascript        \
+		  compiler/passes/remove-proxy-rules         \
+		  compiler/passes/report-left-recursion      \
+          compiler/passes/report-infinite-loops      \
+		  compiler/passes/report-missing-rules       \
+		  compiler/passes/report-unused-rules        \
+          compiler/passes/report-duplicate-labels    \
+          compiler/passes/report-duplicate-rules     \
+		  compiler/passes/report-redefined-rules     \
+		  compiler/passes/propagate-descriptions     \
+		  compiler/passes/patch-ast-graph            \
+		  compiler/passes/print-ruleset              \
+		  compiler/passes/auto-label                 \
+		  compiler/passes/setup-memoization          \
+		  compiler/passes/calculate-consumption-info \
+		  compiler                                   \
 		  peg
 
 # ===== Directories =====
@@ -89,27 +93,44 @@ browser: parser
 	echo 'var PEG = (function(undefined) {'                                            >> $(BROWSER_FILE_DEV)
 	echo '  "use strict";'                                                             >> $(BROWSER_FILE_DEV)
 	echo ''                                                                            >> $(BROWSER_FILE_DEV)
-	echo '  var modules = {'                                                           >> $(BROWSER_FILE_DEV)
+	echo '  var modules;'                                                              >> $(BROWSER_FILE_DEV)
+	echo ''                                                                            >> $(BROWSER_FILE_DEV)
+	echo '  function __require__(path, dir) {'                                         >> $(BROWSER_FILE_DEV)
+	echo '    var name   = ((dir && path.indexOf("/") >= 0) ? dir : "") + path,'       >> $(BROWSER_FILE_DEV)
+	echo '        regexp = /[^\/]+\/\.\.\/|\.\.\/|\.\/|\.js/;'                         >> $(BROWSER_FILE_DEV)
+	echo ''                                                                            >> $(BROWSER_FILE_DEV)
+	echo "    /* Can't use /.../g because we can move backwards in the string. */"     >> $(BROWSER_FILE_DEV)
+	echo '    while (regexp.test(name)) {'                                             >> $(BROWSER_FILE_DEV)
+	echo '      name = name.replace(regexp, "");'                                      >> $(BROWSER_FILE_DEV)
+	echo '    }'                                                                       >> $(BROWSER_FILE_DEV)
+	echo ''                                                                            >> $(BROWSER_FILE_DEV)
+	echo '    return modules[name];'                                                   >> $(BROWSER_FILE_DEV)
+	echo '  }'                                                                         >> $(BROWSER_FILE_DEV)
+	echo ''                                                                            >> $(BROWSER_FILE_DEV)
+	echo '  modules = {'                                                               >> $(BROWSER_FILE_DEV)
 	echo '    define: function(name, factory) {'                                       >> $(BROWSER_FILE_DEV)
 	echo '      var dir    = name.replace(/(^|\/)[^\/]+$$/, "$$1"),'                   >> $(BROWSER_FILE_DEV)
 	echo '          module = { exports: {} };'                                         >> $(BROWSER_FILE_DEV)
-	echo ''                                                                            >> $(BROWSER_FILE_DEV)
 	echo '      function require(path) {'                                              >> $(BROWSER_FILE_DEV)
-	echo '        var name   = dir + path,'                                            >> $(BROWSER_FILE_DEV)
-	echo '            regexp = /[^\/]+\/\.\.\/|\.\//;'                                 >> $(BROWSER_FILE_DEV)
-	echo ''                                                                            >> $(BROWSER_FILE_DEV)
-	echo "        /* Can't use /.../g because we can move backwards in the string. */" >> $(BROWSER_FILE_DEV)
-	echo '        while (regexp.test(name)) {'                                         >> $(BROWSER_FILE_DEV)
-	echo '          name = name.replace(regexp, "");'                                  >> $(BROWSER_FILE_DEV)
+	echo '        var rv = __require__(path, dir);'                                    >> $(BROWSER_FILE_DEV)
+	echo '        if (!rv) {'                                                          >> $(BROWSER_FILE_DEV)
+	echo '          throw new Error("require-ing undefined module: " + path);'         >> $(BROWSER_FILE_DEV)
 	echo '        }'                                                                   >> $(BROWSER_FILE_DEV)
-	echo ''                                                                            >> $(BROWSER_FILE_DEV)
-	echo '        return modules[name];'                                               >> $(BROWSER_FILE_DEV)
+	echo '        return rv;'                                                          >> $(BROWSER_FILE_DEV)
 	echo '      }'                                                                     >> $(BROWSER_FILE_DEV)
 	echo ''                                                                            >> $(BROWSER_FILE_DEV)
 	echo '      factory(module, require);'                                             >> $(BROWSER_FILE_DEV)
 	echo '      this[name] = module.exports;'                                          >> $(BROWSER_FILE_DEV)
 	echo '    }'                                                                       >> $(BROWSER_FILE_DEV)
 	echo '  };'                                                                        >> $(BROWSER_FILE_DEV)
+	echo ''                                                                            >> $(BROWSER_FILE_DEV)
+	echo '  function assert(test) {'                                                   >> $(BROWSER_FILE_DEV)
+	echo '    if (!test) {'                                                            >> $(BROWSER_FILE_DEV)
+	echo '        throw new Error("assertion failed");'                                >> $(BROWSER_FILE_DEV)
+	echo '    }'                                                                       >> $(BROWSER_FILE_DEV)
+	echo '  }'                                                                         >> $(BROWSER_FILE_DEV)
+	echo ''                                                                            >> $(BROWSER_FILE_DEV)
+	echo '  modules["assert"] = assert;'                                               >> $(BROWSER_FILE_DEV)
 	echo ''                                                                            >> $(BROWSER_FILE_DEV)
 
 	for module in $(MODULES); do                                                                \
@@ -119,8 +140,11 @@ browser: parser
 	  echo ''                                                           >> $(BROWSER_FILE_DEV); \
 	done
 
-	echo '  return modules["peg"];' >> $(BROWSER_FILE_DEV)
-	echo '})();'                    >> $(BROWSER_FILE_DEV)
+	echo '  var PEG = modules["peg"];' 									>> $(BROWSER_FILE_DEV)
+	echo '  PEG.__require__ = __require__;'                             >> $(BROWSER_FILE_DEV)
+	echo '  PEG.__modules__ = modules;'                                 >> $(BROWSER_FILE_DEV)
+	echo '  return PEG;'               									>> $(BROWSER_FILE_DEV)
+	echo '})();'                       									>> $(BROWSER_FILE_DEV)
 
 	$(UGLIFYJS)                 \
 	  --mangle                  \

@@ -319,7 +319,7 @@ describe("PEG.js grammar parser", function() {
           return this.env.equals_(result, expected);
         } catch (e) {
           this.message = function() {
-            var stackdump = e.stack || [];
+            var stackdump = [e.stack] || ["---"];
             return "Expected " + jasmine.pp(this.actual) + " "
                  + "to parse as " + jasmine.pp(expected) + ", "
                  + "but it failed to parse with message "
@@ -533,10 +533,10 @@ describe("PEG.js grammar parser", function() {
     expect('start = "abcd"|2.. |').toParseAs(rangeGrammar(2, null));
     expect('start = "abcd"|2..3|').toParseAs(rangeGrammar(2,    3));
 
-    expect('start = "abcd"| .. , "efgh"|').toParseAs(range2Grammar(0, null));
-    expect('start = "abcd"| ..3, "efgh"|').toParseAs(range2Grammar(0,    3));
-    expect('start = "abcd"|2.. , "efgh"|').toParseAs(range2Grammar(2, null));
-    expect('start = "abcd"|2..3, "efgh"|').toParseAs(range2Grammar(2,    3));
+    expect('start = "abcd"| .. , "efgh"|').toParseAs(rangeGrammar2(0, null));
+    expect('start = "abcd"| ..3, "efgh"|').toParseAs(rangeGrammar2(0,    3));
+    expect('start = "abcd"|2.. , "efgh"|').toParseAs(rangeGrammar2(2, null));
+    expect('start = "abcd"|2..3, "efgh"|').toParseAs(rangeGrammar2(2,    3));
   });
 
   /* Canonical PrimaryExpression is "\"abcd\"". */

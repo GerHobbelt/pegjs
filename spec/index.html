@@ -7,6 +7,25 @@
     <script src="vendor/jasmine/jasmine-html.js"></script>
     <script src="../browser/peg.js"></script>
     <script src="helpers.js"></script>
+    <script>
+      "use strict";
+
+      // fake require() et al
+      function require(path) {
+        var rv = PEG.__require__(path.replace('../lib/', './'));
+        if (!rv) {
+            throw new Error("require-ing unknown module: " + path);
+        }
+        return rv;
+      }
+
+      this.module = {
+        set exports(obj) {
+            console.log(obj);
+            PEG.__modules__["helpers"] = obj;
+        }
+      };
+    </script>
     <script src="unit/parser.spec.js"></script>
     <script src="unit/compiler/passes/helpers.js"></script>
     <script src="unit/compiler/passes/report-missing-rules.spec.js"></script>
@@ -23,6 +42,8 @@
     <script src="api/generated-parser-api.spec.js"></script>
     <script src="behavior/generated-parser-behavior.spec.js"></script>
     <script>
+      "use strict";
+
       (function() {
         var env      = jasmine.getEnv(),
             reporter = new jasmine.HtmlReporter();
@@ -30,7 +51,9 @@
         env.addReporter(reporter);
         env.specFilter = reporter.specFilter;
 
-        window.onload = function() { env.execute(); };
+        window.onload = function() { 
+            env.execute(); 
+        };
       })();
     </script>
   </head>
